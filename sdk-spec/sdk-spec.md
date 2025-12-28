@@ -2,12 +2,9 @@
 
 ## 1. Overview
 
-This document defines the canonical specification for the **User Behavior Analytics**
-platform.
+This document defines the canonical specification for the **User Behavior Analytics** platform.
 
-The system collects **anonymous behavioral events** from client applications
-(Android, Web, iOS), ingests them via a backend API, and produces analytics and
-AI-generated insights — without collecting Personally Identifiable Information (PII).
+The system collects **anonymous behavioral events** from client applications (Android, Web, iOS), ingests them via a backend API, and produces analytics and AI-generated insights – without collecting Personally Identifiable Information (PII).
 
 This document is the **single source of truth** for:
 - SDK behavior
@@ -42,8 +39,6 @@ An **event** represents a single user action or system occurrence.
 | `session_id` | string | Random, anonymous session identifier |
 | `platform` | string | `android` \| `ios` \| `web` |
 | `properties` | object | Additional metadata (may be empty) |
-
----
 
 #### Optional Fields
 
@@ -87,69 +82,111 @@ An **event** represents a single user action or system occurrence.
     "success": true
   }
 }
+```
 
 ---
+
 ### 3.4 Batch Payload (Ingestion API)
+
 SDKs send events in batches.
+
+```json
 {
   "api_key": "pk_demo_123",
   "sent_at_ms": 1735368000999,
   "events": [ /* Event[] */ ]
 }
+```
 
 ---
+
 ## 4. SDK Public API
+
 This section defines the developer-facing API exposed by the SDK.
+
 ---
+
 ### 4.1 Initialization
+
+```
 init(apiKey, config)
+```
+
 - Must be called once, at application startup
 - Automatically creates a new session
+
 ---
+
 ### 4.2 Event Tracking
+
+```
 track(eventName, properties = {})
-Rules:
-- eventName must be a non-empty string
-- properties must follow the schema rules
-- Calling track must never crash the host application
+```
+
+**Rules:**
+- `eventName` must be a non-empty string
+- `properties` must follow the schema rules
+- Calling `track` must never crash the host application
 - Invalid events are dropped silently
 
-Examples:
+**Examples:**
+```javascript
 track("screen_view", { "screen": "home" })
 track("upgrade_clicked")
+```
+
 ---
+
 ### 4.3 Flushing
+
+```
 flush()
+```
+
 Forces buffered events to be sent immediately.
-Used when:
+
+**Used when:**
 - App goes to background
 - Manual testing
 - Debugging
----
-### 4.4 Session Management
-getSessionId() -> string
-startNewSession()
----
-### 4.5 Configuration Options
-| Option            | Type    | Default    |
-| ----------------- | ------- | ---------- |
-| `endpoint`        | string  | hosted API |
-| `flushIntervalMs` | number  | 10000      |
-| `maxBatchSize`    | number  | 30         |
-| `maxQueueSize`    | number  | 1000       |
-| `samplingRate`    | number  | 1.0        |
-| `privacyMode`     | enum    | `STRICT`   |
-| `debug`           | boolean | false      |
 
 ---
+
+### 4.4 Session Management
+
+```
+getSessionId() -> string
+startNewSession()
+```
+
+---
+
+### 4.5 Configuration Options
+
+| Option | Type | Default |
+|--------|------|---------|
+| `endpoint` | string | hosted API |
+| `flushIntervalMs` | number | 10000 |
+| `maxBatchSize` | number | 30 |
+| `maxQueueSize` | number | 1000 |
+| `samplingRate` | number | 1.0 |
+| `privacyMode` | enum | `STRICT` |
+| `debug` | boolean | false |
+
+---
+
 ### 4.6 Error Handling
+
 - SDK must never throw errors to the host app
 - Network failures retry silently
 - Privacy violations drop events in STRICT mode
 
 ---
+
 ## 5. Privacy Rules
+
 ### 5.1 PII (Forbidden Data)
+
 The SDK MUST NOT collect:
 - Names, emails, phone numbers
 - IP addresses
@@ -157,18 +194,28 @@ The SDK MUST NOT collect:
 - User-generated text (messages, form inputs)
 - Exact GPS location
 - Account or user IDs
+
 ---
+
 ### 5.2 Allowed Identifiers
+
 - Random session identifiers
 - Event identifiers
 - Hashed device identifiers (salted, client-side)
+
 ---
+
 ### 5.3 Data Minimization
+
 - Collect only what is required for behavior analytics
 - Prefer coarse data over exact
 - No cross-session identity tracking
+
 ---
+
 ## 6. Android Usage Example
+
+```kotlin
 class MyApp : Application() {
   override fun onCreate() {
     super.onCreate()
@@ -187,4 +234,4 @@ class MyApp : Application() {
 
 AnalyticsSDK.track("screen_view", mapOf("screen" to "home"))
 AnalyticsSDK.track("upgrade_clicked")
-
+```
