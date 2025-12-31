@@ -1,5 +1,5 @@
 from typing import List
-from .models import Event
+from app.models import Event
 
 _EVENTS: List[Event] = []
 
@@ -10,3 +10,4 @@ def save_events(events: List[Event]) -> None:
 
 def get_all_events() -> List[Event]:
     return _EVENTS
+

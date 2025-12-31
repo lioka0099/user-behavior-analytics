@@ -23,3 +23,4 @@ class EventBatch(BaseModel):
     api_key: str
     sent_at_ms: int
     events: List[Event]
+
