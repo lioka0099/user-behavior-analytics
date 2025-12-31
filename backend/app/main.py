@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from .models import EventBatch
 from .storage import save_events, get_all_events
+from collections import Counter
+from .storage import get_all_events
 
 app = FastAPI(title="User Behavior Analytics API")
 
@@ -24,3 +26,9 @@ def debug_events():
         "count": len(get_all_events()),
         "events": get_all_events()
     }
+
+@app.get("/analytics/event-counts")
+def event_counts():
+    events = get_all_events()
+    counts = Counter(event.event_name for event in events)
+    return dict(counts)
