@@ -16,6 +16,7 @@ from app.insights.models import InsightRequest
 from app.insights.snapshot import build_analytics_snapshot
 from app.insights.prompts import build_insight_prompt
 from app.insights.generator import generate_insights
+from app.storage.insights import save_insight, list_insights
 
 
 
@@ -66,4 +67,26 @@ def generate_insights_endpoint(
 ):
     snapshot = build_analytics_snapshot(db)
     prompt = build_insight_prompt(snapshot)
-    return generate_insights(prompt)
+    insight = generate_insights(prompt)
+
+    save_insight(db, request.api_key, insight)
+
+    return insight
+
+@router.get("/insights/history")
+def insight_history(
+    api_key: str,
+    db: Session = Depends(get_db)
+):
+    insights = list_insights(db, api_key)
+
+    return [
+        {
+            "id": i.id,
+            "summary": i.summary,
+            "insights": i.insights,
+            "recommendations": i.recommendations,
+            "created_at": i.created_at.isoformat()
+        }
+        for i in insights
+    ]

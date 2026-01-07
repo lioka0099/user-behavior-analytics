@@ -4,6 +4,7 @@ import uuid
 from app.db.database import Base
 
 
+
 class EventDB(Base):
     __tablename__ = "events"
 
@@ -23,4 +24,16 @@ class FunnelDefinitionDB(Base):
     api_key = Column(String, index=True, nullable=False)
     name = Column(String, nullable=False)
     steps = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+class InsightDB(Base):
+    __tablename__ = "insights"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    api_key = Column(String, index=True, nullable=False)
+
+    summary = Column(String, nullable=False)
+    insights = Column(JSON, nullable=False)
+    recommendations = Column(JSON, nullable=False)
+
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
