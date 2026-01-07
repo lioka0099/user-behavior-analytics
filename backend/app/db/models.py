@@ -1,8 +1,7 @@
-from sqlalchemy import Column, String, Integer, DateTime, JSON
+from sqlalchemy import Column, String, DateTime, JSON, Integer
 from datetime import datetime, timezone
 import uuid
-
-from .database import Base
+from app.db.database import Base
 
 
 class EventDB(Base):

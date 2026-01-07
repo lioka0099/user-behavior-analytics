@@ -2,10 +2,13 @@ from fastapi import FastAPI, HTTPException
 from collections import Counter
 from pydantic import BaseModel
 from typing import List
-from app.models import EventBatch, create_funnel_definition
-from app.storage import (
+from app.models import EventBatch
+from app.db.models import FunnelDefinitionDB
+from app.storage.events import (
     save_events,
     get_all_events,
+)
+from app.storage.funnel_definitions import (
     save_funnel_definition,
     list_funnel_definitions,
     get_funnel_definition
@@ -15,6 +18,7 @@ from app.db.models import Base
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from app.db.deps import get_db
+
 
 app = FastAPI(title="User Behavior Analytics API")
 Base.metadata.create_all(bind=engine)
@@ -107,19 +111,19 @@ def funnel_analysis(request: FunnelRequest, db: Session = Depends(get_db)):
 
 @app.post("/analytics/definitions/funnel")
 def create_funnel_definition_endpoint(
-    request: CreateFunnelDefinitionRequest
+    request: CreateFunnelDefinitionRequest,
+    db: Session = Depends(get_db)
 ):
     if not request.steps:
-        return {"error": "Funnel must have at least one step"}
+        raise HTTPException(status_code=400, detail="Funnel must have at least one step")
 
-    definition = create_funnel_definition(
+    definition = FunnelDefinitionDB(
         api_key=request.api_key,
         name=request.name,
         steps=request.steps
     )
 
-    save_funnel_definition(definition)
-    return definition
+    return save_funnel_definition(db, definition)
 
 @app.post("/analytics/definitions/funnel/{definition_id}/run")
 def run_funnel_definition(
@@ -128,12 +132,13 @@ def run_funnel_definition(
     db: Session = Depends(get_db)
 ):
     definition = get_funnel_definition(
+        db,
         request.api_key,
         definition_id
     )
 
     if not definition:
-        return {"error": "Definition not found"}
+        raise HTTPException(status_code=404, detail="Definition not found")
 
     result = run_funnel_for_steps(definition.steps, db)
 
@@ -145,15 +150,16 @@ def run_funnel_definition(
 
 
 @app.get("/analytics/definitions/funnel")
-def list_funnel_definitions_endpoint(api_key: str):
-    return list_funnel_definitions(api_key)
+def list_funnel_definitions_endpoint(api_key: str, db: Session = Depends(get_db)):
+    return list_funnel_definitions(db, api_key)
 
 @app.get("/analytics/definitions/funnel/{definition_id}")
 def get_funnel_definition_endpoint(
     definition_id: str,
-    api_key: str
+    api_key: str,
+    db: Session = Depends(get_db)
 ):
-    definition = get_funnel_definition(api_key, definition_id)
+    definition = get_funnel_definition(db, api_key, definition_id)
     if not definition:
         return {"error": "Definition not found"}
     return definition
