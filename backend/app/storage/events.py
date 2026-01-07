@@ -1,7 +1,7 @@
 from typing import List
 from sqlalchemy.orm import Session
 
-from app.models import Event
+from app.models.pydantic_models import Event
 from app.db.models import EventDB
 
 
