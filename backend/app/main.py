@@ -10,8 +10,14 @@ from app.storage import (
     list_funnel_definitions,
     get_funnel_definition
 )
+from app.db.database import engine
+from app.db.models import Base
+from fastapi import Depends
+from sqlalchemy.orm import Session
+from app.db.deps import get_db
 
 app = FastAPI(title="User Behavior Analytics API")
+Base.metadata.create_all(bind=engine)
 
 class FunnelRequest(BaseModel):
     steps: List[str]
@@ -25,8 +31,8 @@ class RunFunnelRequest(BaseModel):
     api_key: str
 
 
-def run_funnel_for_steps(steps: List[str]):
-    events = get_all_events()
+def run_funnel_for_steps(steps: List[str], db: Session):
+    events = get_all_events(db)
 
     sessions = {}
     for event in events:
@@ -66,11 +72,14 @@ def run_funnel_for_steps(steps: List[str]):
 
 
 @app.post("/events")
-def ingest_events(batch: EventBatch):
+def ingest_events(
+    batch: EventBatch,
+    db: Session = Depends(get_db)
+):
     if not batch.events:
         raise HTTPException(status_code=400, detail="No events provided")
 
-    save_events(batch.events)
+    save_events(db, batch.api_key, batch.events)
 
     return {
         "status": "ok",
@@ -79,21 +88,22 @@ def ingest_events(batch: EventBatch):
 
 
 @app.get("/debug/events")
-def debug_events():
+def debug_events(db: Session = Depends(get_db)):
+    events = get_all_events(db)
     return {
-        "count": len(get_all_events()),
-        "events": get_all_events()
+        "count": len(events),
+        "events": events
     }
 
 @app.get("/analytics/event-counts")
-def event_counts():
-    events = get_all_events()
+def event_counts(db: Session = Depends(get_db)):
+    events = get_all_events(db)
     counts = Counter(event.event_name for event in events)
     return dict(counts)
 
 @app.post("/analytics/funnel")
-def funnel_analysis(request: FunnelRequest):
-    return run_funnel_for_steps(request.steps)
+def funnel_analysis(request: FunnelRequest, db: Session = Depends(get_db)):
+    return run_funnel_for_steps(request.steps, db)
 
 @app.post("/analytics/definitions/funnel")
 def create_funnel_definition_endpoint(
@@ -114,7 +124,8 @@ def create_funnel_definition_endpoint(
 @app.post("/analytics/definitions/funnel/{definition_id}/run")
 def run_funnel_definition(
     definition_id: str,
-    request: RunFunnelRequest
+    request: RunFunnelRequest,
+    db: Session = Depends(get_db)
 ):
     definition = get_funnel_definition(
         request.api_key,
@@ -124,7 +135,7 @@ def run_funnel_definition(
     if not definition:
         return {"error": "Definition not found"}
 
-    result = run_funnel_for_steps(definition.steps)
+    result = run_funnel_for_steps(definition.steps, db)
 
     return {
         "definition_id": definition.id,
