@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 from collections import Counter
 from sqlalchemy.orm import Session
-
 from app.models.pydantic_models import FunnelRequest
 from app.storage.events import get_all_events
 from app.analytics.funnel import run_funnel_for_steps
@@ -13,9 +12,14 @@ from app.analytics.time_analysis import (
 )
 from app.analytics.path_analysis import analyze_paths
 from app.models.pydantic_models import PathAnalysisRequest
+from app.insights.models import InsightRequest
+from app.insights.snapshot import build_analytics_snapshot
+from app.insights.prompts import build_insight_prompt
+from app.insights.generator import generate_insights
+
+
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
-
 
 @router.get("/event-counts")
 def event_counts(db: Session = Depends(get_db)):
@@ -54,3 +58,12 @@ def path_analysis(
     return {
         "paths": analyze_paths(db, request.max_depth)
     }
+
+@router.post("/insights")
+def generate_insights_endpoint(
+    request: InsightRequest,
+    db: Session = Depends(get_db)
+):
+    snapshot = build_analytics_snapshot(db)
+    prompt = build_insight_prompt(snapshot)
+    return generate_insights(prompt)
