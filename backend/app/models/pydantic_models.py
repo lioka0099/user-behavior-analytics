@@ -62,3 +62,5 @@ class CreateFunnelDefinitionRequest(BaseModel):
 class RunFunnelRequest(BaseModel):
     api_key: str
 
+class PathAnalysisRequest(BaseModel):
+    max_depth: int = 10

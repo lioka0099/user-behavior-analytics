@@ -11,6 +11,8 @@ from app.analytics.time_analysis import (
     calculate_time_to_complete,
     TimeToCompleteRequest
 )
+from app.analytics.path_analysis import analyze_paths
+from app.models.pydantic_models import PathAnalysisRequest
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
@@ -43,3 +45,12 @@ def time_to_complete(
         request.end_event,
         db
     )
+
+@router.post("/paths")
+def path_analysis(
+    request: PathAnalysisRequest,
+    db: Session = Depends(get_db)
+):
+    return {
+        "paths": analyze_paths(db, request.max_depth)
+    }
