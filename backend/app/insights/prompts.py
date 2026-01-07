@@ -1,16 +1,20 @@
 from typing import Dict, Any
 
-def build_insight_prompt(analytics_snapshot: Dict[str, Any]) -> str:
+def build_insight_prompt(analytics_snapshot: dict) -> str:
     return f"""
-You are a product analytics expert.
+You must respond with VALID JSON ONLY.
+Do NOT use markdown.
+Do NOT wrap the response in ``` or any formatting.
 
-Given the following analytics data, generate:
-1. A short summary of user behavior
-2. Key insights (bullet points)
-3. Actionable recommendations to improve conversion or UX
+Return a JSON object with EXACTLY these fields:
+- summary (string)
+- insights (array of strings)
+- recommendations (array of strings)
 
-Analytics data:
+You are a senior product analytics expert.
+
+Analyze the following analytics data and produce actionable insights.
+
+Analytics snapshot:
 {analytics_snapshot}
-
-Respond in clear, concise language.
 """
