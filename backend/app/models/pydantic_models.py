@@ -64,3 +64,9 @@ class RunFunnelRequest(BaseModel):
 
 class PathAnalysisRequest(BaseModel):
     max_depth: int = 10
+
+class InsightDiff(BaseModel):
+    metrics_changed: Dict[str, str]   # e.g. {"conversion_rate": "decreased"}
+    new_issues: List[str]             # e.g. ["signup_error increased"]
+    improvements: List[str]           # e.g. ["time_to_complete improved"]
+    summary: str

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from collections import Counter
 from sqlalchemy.orm import Session
 from app.models.pydantic_models import FunnelRequest
@@ -13,10 +13,11 @@ from app.analytics.time_analysis import (
 from app.analytics.path_analysis import analyze_paths
 from app.models.pydantic_models import PathAnalysisRequest
 from app.insights.models import InsightRequest
-from app.insights.snapshot import build_analytics_snapshot
-from app.insights.prompts import build_insight_prompt
-from app.insights.generator import generate_insights
+from app.insights.snapshot import build_analytics_snapshot, build_insight_history_snapshot
+from app.insights.prompts import build_insight_prompt, build_trend_prompt
+from app.insights.generator import generate_insights, generate_trend_insights
 from app.storage.insights import save_insight, list_insights
+
 
 
 
@@ -40,7 +41,7 @@ def debug_dropoff(
 ):
     return calculate_dropoff(steps, db)
 
-@router.post("/time-to-complete")
+@router.post("/time")
 def time_to_complete(
     request: TimeToCompleteRequest,
     db: Session = Depends(get_db)
@@ -90,3 +91,19 @@ def insight_history(
         }
         for i in insights
     ]
+
+@router.get("/insights/trends")
+def insight_trends(
+    api_key: str,
+    db: Session = Depends(get_db)
+):
+    history = build_insight_history_snapshot(db, api_key)
+
+    if len(history) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail="Not enough insight history to analyze trends"
+        )
+
+    prompt = build_trend_prompt(history)
+    return generate_trend_insights(prompt)
