@@ -35,5 +35,8 @@ class InsightDB(Base):
     summary = Column(String, nullable=False)
     insights = Column(JSON, nullable=False)
     recommendations = Column(JSON, nullable=False)
+    
+    # Store the analytics snapshot for historical comparison
+    analytics_snapshot = Column(JSON, nullable=True)
 
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

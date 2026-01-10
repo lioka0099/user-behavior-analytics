@@ -1,18 +1,33 @@
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from app.db.models import InsightDB
 from app.insights.models import InsightResponse
+
 
 def save_insight(
     db: Session,
     api_key: str,
-    insight: InsightResponse
+    insight: InsightResponse,
+    snapshot: Optional[dict] = None
 ) -> InsightDB:
+    """
+    Save an insight to the database.
+    
+    Args:
+        db: Database session
+        api_key: The API key this insight belongs to
+        insight: The InsightResponse from the LLM
+        snapshot: Optional analytics snapshot to store for comparison
+        
+    Returns:
+        The saved InsightDB record
+    """
     db_insight = InsightDB(
         api_key=api_key,
         summary=insight.summary,
         insights=insight.insights,
-        recommendations=insight.recommendations
+        recommendations=insight.recommendations,
+        analytics_snapshot=snapshot
     )
 
     db.add(db_insight)
