@@ -91,4 +91,4 @@ object AnalyticsSDK {
     private fun generateSessionId(): String {
         return UUID.randomUUID().toString()
     }
-}
+} 
