@@ -55,7 +55,7 @@ afterEvaluate {
                 
                 groupId = "com.github.lioka0099" 
                 artifactId = "user-behavior-analytics"  
-                version = "1.0.0" 
+                version = "1.0.2" 
             }
         }
     }
