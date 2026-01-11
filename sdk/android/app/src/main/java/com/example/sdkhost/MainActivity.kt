@@ -13,20 +13,20 @@ class MainActivity : ComponentActivity() {
 
         Log.d("SDK_TEST", "MainActivity started")
 
-        AnalyticsSDK.init(
-            context = this,
-            apiKey = "pk_test_123",
-            endpoint = "http://192.168.1.202:8000/"
-        )
+//        AnalyticsSDK.init(
+//            context = this,
+//            apiKey = "pk_test_123",
+//            endpoint = "http://192.168.1.202:8000/"
+//        )
 
-        AnalyticsSDK.track(
-            "sdk_integration_test",
-            mapOf("from" to "host_app")
-        )
-        AnalyticsSDK.track(
-            "puk",
-            mapOf("from" to "host_app")
-        )
+//        AnalyticsSDK.track(
+//            "sdk_integration_test",
+//            mapOf("from" to "host_app")
+//        )
+//        AnalyticsSDK.track(
+//            "puk",
+//            mapOf("from" to "host_app")
+//        )
 
 
         AnalyticsSDK.flush()

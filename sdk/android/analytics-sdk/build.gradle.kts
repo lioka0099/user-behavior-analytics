@@ -1,13 +1,12 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    id("maven-publish")  // Added for JitPack
 }
 
 android {
     namespace = "com.example.analytics"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24
@@ -43,4 +42,21 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
+}
+
+// ============ JitPack Publishing Configuration ============
+// This tells JitPack how to build and publish the library
+
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+                
+                groupId = "com.github.lioka0099" 
+                artifactId = "user-behavior-analytics"  
+                version = "1.0.0" 
+            }
+        }
+    }
 }

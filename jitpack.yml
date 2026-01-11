@@ -1,0 +1,12 @@
+# JitPack Configuration
+
+jdk:
+  - openjdk17
+
+# Navigate to SDK directory before building
+before_install:
+  - cd sdk/android
+
+# Build command - builds the release AAR
+install:
+  - cd sdk/android && ./gradlew :analytics-sdk:publishToMavenLocal
