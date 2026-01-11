@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, JSON, Integer
+from sqlalchemy import Column, String, DateTime, JSON, BigInteger
 from datetime import datetime, timezone
 import uuid
 from app.db.database import Base
@@ -12,7 +12,7 @@ class EventDB(Base):
     api_key = Column(String, index=True, nullable=False)
     event_name = Column(String, index=True, nullable=False)
     session_id = Column(String, index=True, nullable=False)
-    timestamp_ms = Column(Integer, nullable=False)
+    timestamp_ms = Column(BigInteger, nullable=False)
     platform = Column(String, nullable=True)
     properties = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
