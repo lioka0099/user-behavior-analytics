@@ -1,9 +1,12 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Users, TrendingUp, Sparkles } from "lucide-react";
+import { Activity, Users, TrendingUp, Sparkles, Key, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import api from "@/lib/api";
 
 /**
@@ -46,16 +49,25 @@ function KPICard({
  * Shows key metrics fetched from the backend API
  */
 export default function DashboardPage() {
-  // Fetch event counts from our API
+  // Check if API key is configured
+  const [hasApiKey, setHasApiKey] = useState(true); // Assume true initially to avoid flash
+  
+  useEffect(() => {
+    setHasApiKey(api.hasApiKey());
+  }, []);
+
+  // Fetch event counts from our API (only if API key is set)
   const { data: eventCounts, isLoading: loadingEvents } = useQuery({
-    queryKey: ["eventCounts"],
+    queryKey: ["eventCounts", api.getApiKey()],
     queryFn: () => api.getEventCounts(),
+    enabled: hasApiKey,
   });
 
-  // Fetch insights history
+  // Fetch insights history (only if API key is set)
   const { data: insights, isLoading: loadingInsights } = useQuery({
-    queryKey: ["insights"],
+    queryKey: ["insights", api.getApiKey()],
     queryFn: () => api.getInsightHistory(),
+    enabled: hasApiKey,
   });
 
   // Calculate total events (sum of all event counts)
@@ -68,6 +80,34 @@ export default function DashboardPage() {
 
   // Get latest insight
   const latestInsight = insights?.[0];
+
+  // Show setup prompt if no API key configured
+  if (!hasApiKey) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Card className="max-w-md border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950">
+          <CardContent className="flex flex-col items-center py-12 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-600/20">
+              <Key className="h-8 w-8 text-violet-400" />
+            </div>
+            <h2 className="mt-6 text-2xl font-bold">Welcome to Behavior Analytics</h2>
+            <p className="mt-2 text-slate-400">
+              Generate a unique API key to start tracking events from your app.
+            </p>
+            <Link href="/settings">
+              <Button className="mt-6 bg-violet-600 hover:bg-violet-700">
+                Generate API Key
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <p className="mt-4 text-sm text-slate-500">
+              You&apos;ll use this key in your Android SDK to link events to this dashboard.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

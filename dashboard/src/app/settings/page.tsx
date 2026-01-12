@@ -1,15 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Settings, Key, Server, CheckCircle, Save } from "lucide-react";
+import { Settings, Key, Server, CheckCircle, Save, Sparkles, Copy, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import api from "@/lib/api";
 
 /**
+ * Generate a unique API key
+ * Format: app_xxxxxxxx (8 random hex characters)
+ */
+function generateApiKey(): string {
+  const randomPart = Math.random().toString(16).substring(2, 10);
+  return `app_${randomPart}`;
+}
+
+/**
  * Settings Page
- * - Configure API key
+ * - Generate or configure API key
  * - View connection status
  * - Show API endpoint info
  */
@@ -17,6 +26,7 @@ export default function SettingsPage() {
   // State for API key input
   const [apiKey, setApiKey] = useState("");
   const [saved, setSaved] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Load current API key on mount
   useEffect(() => {
@@ -27,8 +37,23 @@ export default function SettingsPage() {
   const handleSave = () => {
     api.setApiKey(apiKey);
     setSaved(true);
-    // Reset saved indicator after 2 seconds
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  // Generate new API key
+  const handleGenerate = () => {
+    const newKey = generateApiKey();
+    setApiKey(newKey);
+    api.setApiKey(newKey);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  // Copy API key to clipboard
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(apiKey);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   // API endpoint (from environment or default)
@@ -62,44 +87,94 @@ export default function SettingsPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <label
-              htmlFor="apiKey"
-              className="mb-2 block text-sm font-medium text-slate-300"
-            >
-              API Key
-            </label>
-            <div className="flex gap-3">
-              <input
-                id="apiKey"
-                type="text"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Enter your API key (e.g., demo_key)"
-                className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-white placeholder:text-slate-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-              />
+          {/* Generate New Key Button */}
+          {!apiKey && (
+            <div className="rounded-lg border border-dashed border-violet-500/50 bg-violet-950/20 p-6 text-center">
+              <Sparkles className="mx-auto h-8 w-8 text-violet-400" />
+              <h3 className="mt-3 text-lg font-medium">No API Key Configured</h3>
+              <p className="mt-1 text-sm text-slate-400">
+                Generate a unique API key for your app
+              </p>
               <Button
-                onClick={handleSave}
-                className="bg-violet-600 hover:bg-violet-700"
+                onClick={handleGenerate}
+                className="mt-4 bg-violet-600 hover:bg-violet-700"
               >
-                {saved ? (
-                  <>
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Saved!
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save
-                  </>
-                )}
+                <Sparkles className="mr-2 h-4 w-4" />
+                Generate API Key
               </Button>
             </div>
-            <p className="mt-2 text-sm text-slate-500">
-              This key identifies which app&apos;s data to display. Get it from your
-              SDK initialization.
-            </p>
-          </div>
+          )}
+
+          {/* Show API Key when configured */}
+          {apiKey && (
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="apiKey"
+                  className="mb-2 block text-sm font-medium text-slate-300"
+                >
+                  Your API Key
+                </label>
+                <div className="flex gap-2">
+                  <div className="flex flex-1 items-center rounded-lg border border-slate-700 bg-slate-800 px-4 py-2">
+                    <code className="flex-1 font-mono text-violet-400">{apiKey}</code>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCopy}
+                      className="ml-2 h-8 px-2 text-slate-400 hover:text-white"
+                    >
+                      {copied ? (
+                        <CheckCircle className="h-4 w-4 text-emerald-400" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={handleGenerate}
+                    className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    New Key
+                  </Button>
+                </div>
+                {saved && (
+                  <p className="mt-2 flex items-center text-sm text-emerald-400">
+                    <CheckCircle className="mr-1 h-4 w-4" />
+                    Saved to dashboard!
+                  </p>
+                )}
+              </div>
+
+              {/* Instructions */}
+              <div className="rounded-lg bg-slate-800/50 p-4">
+                <h4 className="text-sm font-medium text-slate-300">How to use this key:</h4>
+                <ol className="mt-2 space-y-2 text-sm text-slate-400">
+                  <li className="flex gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-600/20 text-xs text-violet-400">1</span>
+                    Copy the API key above
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-600/20 text-xs text-violet-400">2</span>
+                    Add it to your Android SDK initialization:
+                  </li>
+                </ol>
+                <pre className="mt-2 overflow-x-auto rounded bg-slate-900 p-3 text-xs text-slate-300">
+{`AnalyticsSDK.init(
+    context = this,
+    apiKey = "${apiKey}",
+    endpoint = "${apiEndpoint}"
+)`}
+                </pre>
+                <li className="mt-2 flex gap-2 text-sm text-slate-400">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-600/20 text-xs text-violet-400">3</span>
+                  Events from your app will appear in this dashboard
+                </li>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -72,21 +72,42 @@ export interface InsightComparison {
 
 // ============ API Client Class ============
 
+// Helper to safely access localStorage (not available during SSR)
+const getStoredApiKey = (): string => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("analytics_api_key") || "";
+  }
+  return "";
+};
+
 class ApiClient {
   private apiKey: string;
 
-  constructor(apiKey: string = "demo_key") {
-    this.apiKey = apiKey;
+  constructor() {
+    this.apiKey = getStoredApiKey();
   }
 
-  /** Update the API key (used in Settings page) */
+  /** Update the API key and persist to localStorage */
   setApiKey(apiKey: string) {
     this.apiKey = apiKey;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("analytics_api_key", apiKey);
+    }
   }
 
   /** Get the current API key */
   getApiKey(): string {
+    // Re-read from localStorage in case it changed
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("analytics_api_key");
+      if (stored) this.apiKey = stored;
+    }
     return this.apiKey;
+  }
+
+  /** Check if API key is configured */
+  hasApiKey(): boolean {
+    return this.getApiKey().length > 0;
   }
 
   /** Fetch event counts from backend */
@@ -166,6 +187,7 @@ class ApiClient {
 }
 
 // Export a singleton instance - all components share this
+// API key is persisted to localStorage and must be set by user in Settings
 export const api = new ApiClient();
 export default api;
 
