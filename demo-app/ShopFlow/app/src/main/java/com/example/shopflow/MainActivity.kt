@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
         // Initialize the Analytics SDK with your API key and backend URL
         AnalyticsSDK.init(
             context = this,
-            apiKey = "shopflow_demo", // Your API key
+            apiKey = "app_de6c6290", // Your API key
             endpoint = "https://user-behavior-analytics-production.up.railway.app/"
         )
         
