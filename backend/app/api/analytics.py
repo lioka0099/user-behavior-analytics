@@ -36,9 +36,9 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 # =============================================================================
 
 @router.get("/event-counts")
-def event_counts(db: Session = Depends(get_db)):
-    """Get count of each event type."""
-    events = get_all_events(db)
+def event_counts(api_key: str = None, db: Session = Depends(get_db)):
+    """Get count of each event type, optionally filtered by api_key."""
+    events = get_all_events(db, api_key)
     counts = Counter(event.event_name for event in events)
     return dict(counts)
 

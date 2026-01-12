@@ -6,9 +6,11 @@
  */
 
 // The backend URL - uses environment variable or defaults to your Railway deployment
-const API_BASE_URL =
+// Remove trailing slash if present to avoid double slashes in URLs
+const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://user-behavior-analytics-production.up.railway.app";
+  "https://user-behavior-analytics-production.up.railway.app"
+).replace(/\/+$/, "");
 
 // ============ Type Definitions ============
 // These tell TypeScript what shape the data has
@@ -89,7 +91,9 @@ class ApiClient {
 
   /** Fetch event counts from backend */
   async getEventCounts(): Promise<EventCount> {
-    const response = await fetch(`${API_BASE_URL}/analytics/event-counts`);
+    const response = await fetch(
+      `${API_BASE_URL}/analytics/event-counts?api_key=${this.apiKey}`
+    );
     if (!response.ok) throw new Error("Failed to fetch event counts");
     return response.json();
   }

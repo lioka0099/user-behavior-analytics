@@ -20,12 +20,17 @@ def save_events(db: Session, api_key: str,events: List[Event]) -> None:
     db.commit()
 
 
-def get_all_events(db: Session) -> List[Event]:
-    rows = db.query(EventDB).all()
+def get_all_events(db: Session, api_key: str = None) -> List[Event]:
+    """Get all events, optionally filtered by api_key."""
+    query = db.query(EventDB)
+    
+    if api_key:
+        query = query.filter(EventDB.api_key == api_key)
+    
+    rows = query.all()
 
     return [
         Event(
-            api_key=row.api_key,
             event_name=row.event_name,
             session_id=row.session_id,
             timestamp_ms=row.timestamp_ms,
