@@ -2,11 +2,13 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { AuthProvider } from "@/lib/auth-context";
 
 /**
  * Providers component wraps the entire app with necessary context providers.
  * 
- * Currently includes:
+ * Includes:
+ * - AuthProvider: Supabase authentication state
  * - React Query: for data fetching, caching, and state management
  * 
  * Why useState for QueryClient?
@@ -30,9 +32,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    </AuthProvider>
   );
 }
 
