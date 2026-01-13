@@ -5,26 +5,26 @@ Validates JWT tokens from Supabase Auth and extracts user information.
 """
 
 import jwt
+from jwt import PyJWKClient
 from typing import Optional
 from fastapi import HTTPException, Depends, Header
 from functools import lru_cache
-from app.core.config import SUPABASE_JWT_SECRET, SUPABASE_URL
+from app.core.config import SUPABASE_URL, SUPABASE_JWT_SECRET
 
 
 @lru_cache(maxsize=1)
-def get_supabase_jwt_secret() -> str:
+def get_jwks_client() -> PyJWKClient:
     """
-    Get Supabase JWT secret.
-    
-    Returns the JWT secret from environment variables.
-    Cached to avoid repeated lookups.
+    Create a JWKS client for Supabase public keys.
+
+    Supabase access tokens are signed with ES256/RS256.
+    We validate them against the JWKS endpoint.
     """
-    if not SUPABASE_JWT_SECRET:
-        raise ValueError(
-            "SUPABASE_JWT_SECRET environment variable is required. "
-            "Get it from Supabase Dashboard > Settings > API > JWT Secret"
-        )
-    return SUPABASE_JWT_SECRET
+    if not SUPABASE_URL:
+        raise ValueError("SUPABASE_URL is required to fetch JWKS keys")
+
+    jwks_url = f"{SUPABASE_URL.rstrip('/')}/auth/v1/keys"
+    return PyJWKClient(jwks_url)
 
 
 def verify_supabase_token(token: str) -> dict:
@@ -41,27 +41,34 @@ def verify_supabase_token(token: str) -> dict:
         HTTPException: If token is invalid or expired
     """
     try:
-        secret = get_supabase_jwt_secret()
-        
-        # Decode and verify the token
+        # Prefer JWKS validation (ES256/RS256)
+        jwks_client = get_jwks_client()
+        signing_key = jwks_client.get_signing_key_from_jwt(token).key
+
         payload = jwt.decode(
             token,
-            secret,
-            algorithms=["HS256"],
+            signing_key,
+            algorithms=["RS256", "ES256"],
             audience="authenticated",  # Supabase uses this audience
         )
-        
         return payload
+
     except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=401,
-            detail="Token has expired"
-        )
+        raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.InvalidTokenError as e:
-        raise HTTPException(
-            status_code=401,
-            detail=f"Invalid token: {str(e)}"
-        )
+        # Fallback: if JWKS is unavailable but an HMAC secret is provided, try HS256
+        if SUPABASE_JWT_SECRET:
+            try:
+                payload = jwt.decode(
+                    token,
+                    SUPABASE_JWT_SECRET,
+                    algorithms=["HS256"],
+                    audience="authenticated",
+                )
+                return payload
+            except Exception:
+                pass
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
 
 
 def get_current_user(
