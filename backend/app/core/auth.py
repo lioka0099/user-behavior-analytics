@@ -25,9 +25,11 @@ def get_jwks_client() -> PyJWKClient:
         raise ValueError("SUPABASE_URL is required")
 
     base = SUPABASE_URL.rstrip("/")
-    # Include anon key as query param to avoid 401/404 from the JWKS endpoint
-    jwks_url = f"{base}/auth/v1/keys"
+    # Supabase JWKS endpoint (public signing keys for RS256/ES256)
+    # Docs: /auth/v1/.well-known/jwks.json
+    jwks_url = f"{base}/auth/v1/.well-known/jwks.json"
     if SUPABASE_ANON_KEY:
+        # Some setups may require passing the anon key; harmless if not required.
         jwks_url = f"{jwks_url}?apikey={SUPABASE_ANON_KEY}"
         headers = {"apikey": SUPABASE_ANON_KEY}
     else:
