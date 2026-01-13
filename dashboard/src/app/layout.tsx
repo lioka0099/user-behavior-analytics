@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/sidebar";
 import { Providers } from "@/components/providers";
+import { AppLayout } from "@/components/app-layout";
 
 /**
  * Custom fonts - more distinctive than default
@@ -52,15 +52,8 @@ export default function RootLayout({
       >
         {/* Providers wrap everything - enables React Query in all pages */}
         <Providers>
-          {/* Fixed sidebar on the left */}
-          <Sidebar />
-          
-          {/* Main content area - offset by sidebar width (ml-64 = margin-left: 256px) */}
-          <main className="ml-64 min-h-screen">
-            <div className="p-8">
-              {children}
-            </div>
-          </main>
+          {/* AppLayout handles sidebar and route protection conditionally */}
+          <AppLayout>{children}</AppLayout>
         </Providers>
       </body>
     </html>
