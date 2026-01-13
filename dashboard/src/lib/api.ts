@@ -70,6 +70,17 @@ export interface InsightComparison {
   compared_at: string;
 }
 
+/** App model for TypeScript */
+export interface App {
+  id: string;
+  user_id: string;
+  api_key: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // ============ API Client Class ============
 
 // Helper to safely access localStorage (not available during SSR)
@@ -79,6 +90,41 @@ const getStoredApiKey = (): string => {
   }
   return "";
 };
+
+/**
+ * Get JWT token from Supabase session
+ * This is called dynamically to get the latest session
+ */
+async function getAuthToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  
+  try {
+    const { supabase } = await import("./supabase");
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token || null;
+  } catch (error) {
+    console.warn("Failed to get auth token:", error);
+    return null;
+  }
+}
+
+/**
+ * Build headers for authenticated requests
+ */
+async function getAuthHeaders(includeContentType = true): Promise<HeadersInit> {
+  const headers: HeadersInit = {};
+  
+  if (includeContentType) {
+    headers["Content-Type"] = "application/json";
+  }
+  
+  const token = await getAuthToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
+  return headers;
+}
 
 class ApiClient {
   private apiKey: string;
@@ -182,6 +228,121 @@ class ApiClient {
       `${API_BASE_URL}/analytics/insights/compare?api_key=${this.apiKey}`
     );
     if (!response.ok) throw new Error("Failed to compare insights");
+    return response.json();
+  }
+
+  // =============================================================================
+  // App Management Endpoints (Require Authentication)
+  // =============================================================================
+
+  /** Get all apps for the authenticated user */
+  async getApps(): Promise<App[]> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/apps`, {
+      headers,
+    });
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("Authentication required. Please log in.");
+      }
+      throw new Error("Failed to fetch apps");
+    }
+    return response.json();
+  }
+
+  /** Create a new app */
+  async createApp(name: string, description?: string): Promise<App> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/apps`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ name, description }),
+    });
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("Authentication required. Please log in.");
+      }
+      const error = await response.json().catch(() => ({ detail: "Failed to create app" }));
+      throw new Error(error.detail || "Failed to create app");
+    }
+    return response.json();
+  }
+
+  /** Get a specific app by ID */
+  async getApp(appId: string): Promise<App> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/apps/${appId}`, {
+      headers,
+    });
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("Authentication required. Please log in.");
+      }
+      if (response.status === 404) {
+        throw new Error("App not found");
+      }
+      throw new Error("Failed to fetch app");
+    }
+    return response.json();
+  }
+
+  /** Update an app */
+  async updateApp(
+    appId: string,
+    updates: { name?: string; description?: string }
+  ): Promise<App> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/apps/${appId}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(updates),
+    });
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("Authentication required. Please log in.");
+      }
+      if (response.status === 404) {
+        throw new Error("App not found");
+      }
+      throw new Error("Failed to update app");
+    }
+    return response.json();
+  }
+
+  /** Delete an app */
+  async deleteApp(appId: string): Promise<void> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/apps/${appId}`, {
+      method: "DELETE",
+      headers,
+    });
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("Authentication required. Please log in.");
+      }
+      if (response.status === 404) {
+        throw new Error("App not found");
+      }
+      throw new Error("Failed to delete app");
+    }
+  }
+
+  /** Regenerate API key for an app */
+  async regenerateApiKey(appId: string): Promise<App> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/apps/${appId}/regenerate-key`, {
+      method: "POST",
+      headers,
+    });
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("Authentication required. Please log in.");
+      }
+      if (response.status === 404) {
+        throw new Error("App not found");
+      }
+      throw new Error("Failed to regenerate API key");
+    }
     return response.json();
   }
 }
