@@ -20,3 +20,66 @@ captures/
 # Logs
 *.log
 
+# backend
+/backend/app/_pycache_
+
+# Dashboard
+/dashboard/node_modules
+/dashboard/.pnp
+/dashboard.pnp.*
+/dashboard.yarn/*
+/dashboard!.yarn/patches
+/dashboard!.yarn/plugins
+/dashboard!.yarn/releases
+/dashboard!.yarn/versions
+/dashboard# testing
+/dashboard/coverage
+/dashboard# next.js
+/dashboard/.next/
+/dashboard/out/
+/dashboard# production
+/dashboard/build
+/dashboard# misc
+/dashboard.DS_Store
+/dashboard*.pem
+/dashboard# debug
+/dashboardnpm-debug.log*
+/dashboardyarn-debug.log*
+/dashboardyarn-error.log*
+/dashboard.pnpm-debug.log*
+/dashboard# env files (can opt-in for committing if needed)
+/dashboard.env*
+/dashboard# vercel
+/dashboard.vercel
+/dashboard# typescript
+/dashboard*.tsbuildinfo
+/dashboardnext-env.d.ts
+
+
+# demo-app/ShopFlow
+demo-app/ShopFlow/*.iml
+demo-app/ShopFlow/.gradle
+demo-app/ShopFlow/local.properties
+demo-app/ShopFlow/.idea/caches
+demo-app/ShopFlow/.idea/libraries
+demo-app/ShopFlow/.idea/modules.xml
+demo-app/ShopFlow/.idea/workspace.xml
+demo-app/ShopFlow/.idea/navEditor.xml
+demo-app/ShopFlow/.idea/assetWizardSettings.xml
+demo-app/ShopFlow.DS_Store
+demo-app/ShopFlow/build
+demo-app/ShopFlow/captures
+demo-app/ShopFlow.externalNativeBuild
+demo-app/ShopFlow.cxx
+demo-app/ShopFlowlocal.properties
+
+
+# sdk/android
+/sdk/android/node_modules
+/sdk/android/.pnp
+/sdk/android.pnp.*
+/sdk/android.yarn/*
+/sdk/android!.yarn/patches
+/sdk/android!.yarn/plugins
+/sdk/android!.yarn/releases
+/sdk/android!.yarn/versions
