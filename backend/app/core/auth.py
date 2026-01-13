@@ -18,12 +18,21 @@ def get_jwks_client() -> PyJWKClient:
     Create a JWKS client for Supabase public keys.
 
     Supabase access tokens are signed with ES256/RS256.
-    We validate them against the JWKS endpoint.
+    We validate them against the JWKS endpoint. Some Supabase projects
+    require the anon key to be passed; we include it as a query param/header.
     """
     if not SUPABASE_URL:
         raise ValueError("SUPABASE_URL is required")
-    jwks_url = f"{SUPABASE_URL.rstrip('/')}/auth/v1/keys"
-    headers = {"apikey": SUPABASE_ANON_KEY} if SUPABASE_ANON_KEY else None
+
+    base = SUPABASE_URL.rstrip("/")
+    # Include anon key as query param to avoid 401/404 from the JWKS endpoint
+    jwks_url = f"{base}/auth/v1/keys"
+    if SUPABASE_ANON_KEY:
+        jwks_url = f"{jwks_url}?apikey={SUPABASE_ANON_KEY}"
+        headers = {"apikey": SUPABASE_ANON_KEY}
+    else:
+        headers = None
+
     return PyJWKClient(jwks_url, headers=headers)
 
 
@@ -55,7 +64,7 @@ def verify_supabase_token(token: str) -> dict:
 
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.InvalidTokenError as e:
+    except Exception as jwks_error:
         # Fallback: if JWKS is unavailable but an HMAC secret is provided, try HS256
         if SUPABASE_JWT_SECRET:
             try:
@@ -68,7 +77,8 @@ def verify_supabase_token(token: str) -> dict:
                 return payload
             except Exception:
                 pass
-        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+        # If JWKS fetch/validation fails, return 401 instead of 500
+        raise HTTPException(status_code=401, detail=f"Invalid token: {jwks_error}")
 
 
 def get_current_user(
