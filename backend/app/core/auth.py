@@ -9,7 +9,7 @@ from jwt import PyJWKClient
 from typing import Optional
 from fastapi import HTTPException, Depends, Header
 from functools import lru_cache
-from app.core.config import SUPABASE_URL, SUPABASE_JWT_SECRET
+from app.core.config import SUPABASE_URL, SUPABASE_JWT_SECRET, SUPABASE_ANON_KEY
 
 
 @lru_cache(maxsize=1)
@@ -21,10 +21,10 @@ def get_jwks_client() -> PyJWKClient:
     We validate them against the JWKS endpoint.
     """
     if not SUPABASE_URL:
-        raise ValueError("SUPABASE_URL is required to fetch JWKS keys")
-
+        raise ValueError("SUPABASE_URL is required")
     jwks_url = f"{SUPABASE_URL.rstrip('/')}/auth/v1/keys"
-    return PyJWKClient(jwks_url)
+    headers = {"apikey": SUPABASE_ANON_KEY} if SUPABASE_ANON_KEY else None
+    return PyJWKClient(jwks_url, headers=headers)
 
 
 def verify_supabase_token(token: str) -> dict:
