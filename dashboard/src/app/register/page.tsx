@@ -28,7 +28,7 @@ export default function RegisterPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
-      router.push("/");
+      router.push("/apps");
     }
   }, [user, authLoading, router]);
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
+  FolderKanban,
   LayoutDashboard,
   GitBranch,
   Lightbulb,
@@ -17,6 +18,7 @@ import {
  * Each item has a name, URL path, and icon
  */
 const navigation = [
+  { name: "Apps", href: "/apps", icon: FolderKanban },
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Funnels", href: "/funnels", icon: GitBranch },
   { name: "Insights", href: "/insights", icon: Lightbulb },

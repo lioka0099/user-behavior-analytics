@@ -26,7 +26,7 @@ export default function LoginPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
-      router.push("/");
+      router.push("/apps");
     }
   }, [user, authLoading, router]);
 
@@ -56,7 +56,7 @@ export default function LoginPage() {
       setIsLoading(false);
     } else {
       // Success - auth context will update, and we'll redirect
-      router.push("/");
+      router.push("/apps");
     }
   };
 
