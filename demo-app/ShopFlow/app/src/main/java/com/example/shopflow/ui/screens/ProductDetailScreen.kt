@@ -60,7 +60,10 @@ fun ProductDetailScreen(
             TopAppBar(
                 title = { },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = {
+                        AnalyticsSDK.track("back_tap", mapOf("from_screen" to "product_detail", "product_id" to product.id))
+                        onBackClick()
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
@@ -71,7 +74,10 @@ fun ProductDetailScreen(
                     containerColor = Color.Transparent
                 ),
                 actions = {
-                    IconButton(onClick = onCartClick) {
+                    IconButton(onClick = {
+                        AnalyticsSDK.track("cart_icon_tap", mapOf("from_screen" to "product_detail", "product_id" to product.id))
+                        onCartClick()
+                    }) {
                         BadgedBox(
                             badge = {
                                 if (cartItemCount > 0) {

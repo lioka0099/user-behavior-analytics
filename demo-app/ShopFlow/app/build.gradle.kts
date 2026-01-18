@@ -16,6 +16,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Analytics configuration (override these per developer/env as needed)
+        buildConfigField("String", "ANALYTICS_API_KEY", "\"app_c30f3d37\"")
+        buildConfigField("String", "ANALYTICS_ENDPOINT", "\"https://user-behavior-analytics-production.up.railway.app/\"")
     }
 
     buildTypes {
@@ -36,6 +40,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

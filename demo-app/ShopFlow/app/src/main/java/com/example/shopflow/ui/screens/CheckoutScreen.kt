@@ -94,7 +94,13 @@ fun CheckoutScreen(
                         )
                         Spacer(modifier = Modifier.height(32.dp))
                         Button(
-                            onClick = onOrderComplete,
+                            onClick = {
+                                AnalyticsSDK.track(
+                                    "continue_shopping_tap",
+                                    mapOf("from_screen" to "checkout_complete")
+                                )
+                                onOrderComplete()
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
@@ -198,6 +204,10 @@ fun CheckoutScreen(
                             isProcessing = true
                             
                             // Simulate payment processing
+                            AnalyticsSDK.track("place_order_tap", mapOf(
+                                "item_count" to itemCount,
+                                "cart_total" to total
+                            ))
                             AnalyticsSDK.track("payment_processing", mapOf(
                                 "cart_total" to total
                             ))

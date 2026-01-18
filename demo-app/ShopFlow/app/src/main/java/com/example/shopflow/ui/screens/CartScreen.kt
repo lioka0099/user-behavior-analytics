@@ -32,11 +32,13 @@ fun CartScreen(
 ) {
     val cartItems = CartManager.items
     val total = CartManager.getTotal()
+    val itemCount = CartManager.getItemCount()
     
     // Track cart view
     LaunchedEffect(Unit) {
         AnalyticsSDK.track("cart_view", mapOf(
-            "item_count" to cartItems.size,
+            "distinct_items" to cartItems.size,
+            "item_count" to itemCount,
             "cart_total" to total
         ))
     }
@@ -108,14 +110,36 @@ fun CartScreen(
                         CartItemCard(
                             cartItem = cartItem,
                             onQuantityChange = { newQuantity ->
+                                val previousQuantity = cartItem.quantity
+                                val totalBefore = CartManager.getTotal()
                                 CartManager.updateQuantity(cartItem.product.id, newQuantity)
+                                val totalAfter = CartManager.getTotal()
+
+                                AnalyticsSDK.track(
+                                    "cart_quantity_change",
+                                    mapOf(
+                                        "product_id" to cartItem.product.id,
+                                        "product_name" to cartItem.product.name,
+                                        "previous_quantity" to previousQuantity,
+                                        "new_quantity" to newQuantity,
+                                        "cart_total_before" to totalBefore,
+                                        "cart_total_after" to totalAfter,
+                                        "item_count" to CartManager.getItemCount()
+                                    )
+                                )
                             },
                             onRemove = {
                                 AnalyticsSDK.track("remove_from_cart", mapOf(
                                     "product_id" to cartItem.product.id,
-                                    "product_name" to cartItem.product.name
+                                    "product_name" to cartItem.product.name,
+                                    "cart_total_before" to CartManager.getTotal(),
+                                    "item_count_before" to CartManager.getItemCount()
                                 ))
                                 CartManager.removeFromCart(cartItem.product.id)
+                                AnalyticsSDK.track("cart_updated", mapOf(
+                                    "cart_total_after" to CartManager.getTotal(),
+                                    "item_count_after" to CartManager.getItemCount()
+                                ))
                             }
                         )
                     }

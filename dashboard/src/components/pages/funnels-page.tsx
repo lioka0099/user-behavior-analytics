@@ -8,6 +8,9 @@ import {
   Play,
   RefreshCw,
   ChevronRight,
+  X,
+  ArrowUp,
+  ArrowDown,
   Users,
   Target,
   Percent,
@@ -23,22 +26,42 @@ export function FunnelsPage() {
 
   const [analyzingFunnelId, setAnalyzingFunnelId] = useState<string | null>(null);
   const [funnelResults, setFunnelResults] = useState<Record<string, FunnelResult>>({});
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newSteps, setNewSteps] = useState<string[]>([]);
+  const [newStepToAdd, setNewStepToAdd] = useState<string>("");
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const { data: funnels, isLoading } = useQuery({
     queryKey: ["funnels", apiKey],
     queryFn: () => api.getFunnelDefinitions(),
   });
 
+  const { data: eventCounts } = useQuery({
+    queryKey: ["eventCounts", apiKey],
+    queryFn: () => api.getEventCounts(),
+  });
+
+  const availableEvents = eventCounts ? Object.keys(eventCounts).sort() : [];
+
   const createFunnel = useMutation({
-    mutationFn: () =>
-      api.createFunnelDefinition("User Onboarding", [
-        "app_open",
-        "signup_view",
-        "signup_complete",
-        "first_action",
-      ]),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["funnels"] });
+    mutationFn: async () => {
+      setCreateError(null);
+      const name = newName.trim();
+      const steps = newSteps.map((s) => s.trim()).filter(Boolean);
+      if (!name) throw new Error("Funnel name is required");
+      if (steps.length < 2) throw new Error("Add at least 2 steps");
+      return api.createFunnelDefinition(name, steps);
+    },
+    onSuccess: async () => {
+      setNewName("");
+      setNewSteps([]);
+      setNewStepToAdd("");
+      setCreateOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ["funnels", apiKey] });
+    },
+    onError: (e: unknown) => {
+      setCreateError(e instanceof Error ? e.message : "Failed to create funnel");
     },
   });
 
@@ -65,14 +88,168 @@ export function FunnelsPage() {
           <p className="mt-1 text-slate-400">Track user journeys and identify drop-off points</p>
         </div>
         <Button
-          onClick={() => createFunnel.mutate()}
-          disabled={createFunnel.isPending}
-          className="bg-violet-600 hover:bg-violet-700"
+          onClick={() => {
+            setCreateOpen((v) => !v);
+            setCreateError(null);
+          }}
+          variant="outline"
+          className="border-slate-700 text-slate-300 hover:bg-slate-800"
         >
           <Plus className="mr-2 h-4 w-4" />
-          {createFunnel.isPending ? "Creating..." : "Create Sample Funnel"}
+          Create funnel
         </Button>
       </div>
+
+      {createOpen && (
+        <Card className="border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950">
+          <CardHeader>
+            <CardTitle className="text-lg">Create funnel</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-300">
+                  Funnel name
+                </label>
+                <input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="e.g. Purchase flow"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-white placeholder:text-slate-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-300">
+                  Add step
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    value={newStepToAdd}
+                    onChange={(e) => setNewStepToAdd(e.target.value)}
+                    className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                  >
+                    <option value="">Select an event…</option>
+                    {availableEvents.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    onClick={() => {
+                      const step = newStepToAdd.trim();
+                      if (!step) return;
+                      if (newSteps.includes(step)) {
+                        setCreateError("This step is already in the funnel");
+                        return;
+                      }
+                      setNewSteps((prev) => [...prev, step]);
+                      setNewStepToAdd("");
+                    }}
+                    disabled={!newStepToAdd}
+                    className="bg-violet-600 hover:bg-violet-700 disabled:opacity-50"
+                  >
+                    Add
+                  </Button>
+                </div>
+                <p className="mt-2 text-xs text-slate-500">
+                  Steps are ordered. A user converts when they complete all steps in order.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+              <p className="mb-3 text-sm font-medium text-slate-300">Steps</p>
+              {newSteps.length === 0 ? (
+                <p className="text-sm text-slate-500">Add events to build your funnel.</p>
+              ) : (
+                <div className="space-y-2">
+                  {newSteps.map((step, idx) => (
+                    <div
+                      key={`${step}-${idx}`}
+                      className="flex items-center justify-between rounded-lg bg-slate-800/50 px-3 py-2"
+                    >
+                      <p className="truncate text-sm text-slate-200">
+                        <span className="mr-2 text-slate-500">{idx + 1}.</span>
+                        {step}
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (idx === 0) return;
+                            setNewSteps((prev) => {
+                              const next = [...prev];
+                              [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                              return next;
+                            });
+                          }}
+                          disabled={idx === 0}
+                          className="text-slate-400 hover:text-white"
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (idx === newSteps.length - 1) return;
+                            setNewSteps((prev) => {
+                              const next = [...prev];
+                              [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                              return next;
+                            });
+                          }}
+                          disabled={idx === newSteps.length - 1}
+                          className="text-slate-400 hover:text-white"
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setNewSteps((prev) => prev.filter((_, i) => i !== idx))}
+                          className="text-slate-400 hover:text-white"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {createError && (
+              <div className="rounded-lg border border-rose-500/20 bg-rose-950/20 p-3">
+                <p className="text-sm text-rose-400">{createError}</p>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCreateOpen(false);
+                  setCreateError(null);
+                }}
+                className="border-slate-700 text-slate-300 hover:bg-slate-800"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => createFunnel.mutate()}
+                disabled={createFunnel.isPending}
+                className="bg-violet-600 hover:bg-violet-700"
+              >
+                {createFunnel.isPending ? "Saving..." : "Save funnel"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
@@ -86,14 +263,7 @@ export function FunnelsPage() {
             <p className="mt-1 text-sm text-slate-500">
               Create your first funnel to start analyzing user flows
             </p>
-            <Button
-              onClick={() => createFunnel.mutate()}
-              disabled={createFunnel.isPending}
-              className="mt-4 bg-violet-600 hover:bg-violet-700"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Create Sample Funnel
-            </Button>
+            <p className="mt-4 text-sm text-slate-500">Use “Create funnel” above to add one.</p>
           </CardContent>
         </Card>
       ) : (

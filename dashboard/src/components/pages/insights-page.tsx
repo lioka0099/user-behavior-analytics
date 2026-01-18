@@ -1,15 +1,46 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Lightbulb, Sparkles, RefreshCw } from "lucide-react";
+import {
+  Lightbulb,
+  Sparkles,
+  RefreshCw,
+  GitCompare,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import api from "@/lib/api";
+import { useState } from "react";
+
+function TrendIcon({ trend }: { trend: "improving" | "degrading" | "stable" }) {
+  if (trend === "improving") return <TrendingUp className="h-5 w-5 text-emerald-500" />;
+  if (trend === "degrading") return <TrendingDown className="h-5 w-5 text-rose-500" />;
+  return <Minus className="h-5 w-5 text-slate-400" />;
+}
+
+function PriorityBadge({ priority }: { priority: "high" | "medium" | "low" }) {
+  const colors: Record<string, string> = {
+    high: "border-rose-500/50 bg-rose-500/10 text-rose-400",
+    medium: "border-amber-500/50 bg-amber-500/10 text-amber-400",
+    low: "border-slate-500/50 bg-slate-500/10 text-slate-400",
+  };
+  return (
+    <Badge variant="outline" className={colors[priority] || colors.medium}>
+      {priority} priority
+    </Badge>
+  );
+}
 
 export function InsightsPage() {
   const queryClient = useQueryClient();
   const apiKey = api.getApiKey();
+  const [showComparison, setShowComparison] = useState(false);
 
   const { data: insights, isLoading } = useQuery({
     queryKey: ["insights", apiKey],
@@ -19,8 +50,15 @@ export function InsightsPage() {
   const generateInsight = useMutation({
     mutationFn: () => api.generateInsight(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["insights"] });
+      queryClient.invalidateQueries({ queryKey: ["insights", apiKey] });
+      queryClient.invalidateQueries({ queryKey: ["insightComparison", apiKey] });
     },
+  });
+
+  const comparison = useQuery({
+    queryKey: ["insightComparison", apiKey],
+    queryFn: () => api.compareInsights(),
+    enabled: showComparison && (insights?.length ?? 0) >= 2,
   });
 
   return (
@@ -30,15 +68,115 @@ export function InsightsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Insights</h1>
           <p className="mt-1 text-slate-400">AI-generated insights for the selected app</p>
         </div>
-        <Button
-          onClick={() => generateInsight.mutate()}
-          disabled={generateInsight.isPending}
-          className="bg-violet-600 hover:bg-violet-700"
-        >
-          <Sparkles className="mr-2 h-4 w-4" />
-          {generateInsight.isPending ? "Generating..." : "Generate Insight"}
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setShowComparison((v) => !v)}
+            disabled={(insights?.length ?? 0) < 2}
+            className="border-slate-700 text-slate-300 hover:bg-slate-800"
+          >
+            <GitCompare className="mr-2 h-4 w-4" />
+            {showComparison ? "Hide comparison" : "Compare trends"}
+          </Button>
+          <Button
+            onClick={() => generateInsight.mutate()}
+            disabled={generateInsight.isPending}
+            className="bg-violet-600 hover:bg-violet-700"
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            {generateInsight.isPending ? "Generating..." : "Generate Insight"}
+          </Button>
+        </div>
       </div>
+
+      {showComparison && comparison.data && (
+        <Card className="border-violet-600/50 bg-gradient-to-br from-violet-950/50 to-slate-950">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-600/20">
+                  <GitCompare className="h-5 w-5 text-violet-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Trend Comparison</CardTitle>
+                  <p className="text-sm text-slate-400">Latest vs previous insight</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <TrendIcon trend={comparison.data.diff.overall_trend} />
+                <span className="text-lg font-medium capitalize">
+                  {comparison.data.diff.overall_trend}
+                </span>
+                <PriorityBadge priority={comparison.data.explanation.priority} />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="rounded-lg bg-slate-900/50 p-4">
+              <p className="mb-2 text-sm font-medium text-slate-300">AI interpretation</p>
+              <p className="text-slate-200">{comparison.data.explanation.interpretation}</p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-lg bg-rose-950/20 p-4">
+                <p className="mb-3 flex items-center gap-2 text-sm font-medium text-rose-400">
+                  <AlertCircle className="h-4 w-4" />
+                  Issues detected
+                </p>
+                {comparison.data.diff.issues.length ? (
+                  <ul className="space-y-2">
+                    {comparison.data.diff.issues.map((issue, i) => (
+                      <li key={i} className="text-sm text-slate-300">
+                        - {issue}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-slate-500">No issues detected</p>
+                )}
+              </div>
+
+              <div className="rounded-lg bg-emerald-950/20 p-4">
+                <p className="mb-3 flex items-center gap-2 text-sm font-medium text-emerald-400">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Improvements
+                </p>
+                {comparison.data.diff.improvements.length ? (
+                  <ul className="space-y-2">
+                    {comparison.data.diff.improvements.map((improvement, i) => (
+                      <li key={i} className="text-sm text-slate-300">
+                        - {improvement}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-slate-500">No improvements detected</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-3 text-sm font-medium text-slate-300">Recommended actions</p>
+              <div className="space-y-2">
+                {comparison.data.explanation.recommended_actions.map((action, i) => (
+                  <div key={i} className="rounded-lg bg-slate-900/50 p-3 text-sm text-slate-300">
+                    {i + 1}. {action}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {showComparison && comparison.isLoading && (
+        <Card className="border-slate-800 bg-slate-900/50">
+          <CardContent className="flex items-center justify-center py-12">
+            <RefreshCw className="h-6 w-6 animate-spin text-violet-500" />
+            <span className="ml-3 text-slate-400">Comparing insights...</span>
+          </CardContent>
+        </Card>
+      )}
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
@@ -62,7 +200,7 @@ export function InsightsPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {insights!.map((insight) => (
+          {insights!.map((insight, index) => (
             <Card
               key={insight.id}
               className="border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950"
@@ -73,12 +211,17 @@ export function InsightsPage() {
                     <Sparkles className="h-5 w-5 text-violet-400" />
                   </div>
                   <div className="min-w-0">
-                    <CardTitle className="text-lg truncate">{insight.summary}</CardTitle>
+                    <CardTitle className="text-lg">
+                      Insight #{insights!.length - index}
+                    </CardTitle>
                     <p className="text-sm text-slate-500">{new Date(insight.created_at).toLocaleString()}</p>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
+                <p className="text-slate-200 break-words">
+                  {insight.summary}
+                </p>
                 {insight.insights?.length ? (
                   <div>
                     <p className="text-sm font-medium text-slate-400">Key insights</p>
