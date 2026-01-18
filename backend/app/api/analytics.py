@@ -8,7 +8,8 @@ This module provides REST endpoints for:
 - Insight comparison between time periods
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from typing import Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from collections import Counter
 from sqlalchemy.orm import Session
@@ -17,6 +18,7 @@ from app.models.pydantic_models import FunnelRequest, PathAnalysisRequest
 from app.storage.events import get_all_events
 from app.analytics.funnel import run_funnel_for_steps
 from app.db.deps import get_db
+from app.db.models import EventDB
 from app.analytics.dropoff import calculate_dropoff
 from app.analytics.time_analysis import calculate_time_to_complete, TimeToCompleteRequest
 from app.analytics.path_analysis import analyze_paths
@@ -41,6 +43,54 @@ def event_counts(api_key: str = None, db: Session = Depends(get_db)):
     events = get_all_events(db, api_key)
     counts = Counter(event.event_name for event in events)
     return dict(counts)
+
+
+@router.get("/event-volume")
+def event_volume(
+    api_key: str,
+    days: int = 7,
+    event_name: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    """
+    Daily total event volume for the last N days (UTC).
+
+    - Returns zero-count days so charts are continuous.
+    - If `event_name` is provided, filters to that single event.
+    """
+    if days < 1 or days > 90:
+        raise HTTPException(status_code=400, detail="days must be between 1 and 90")
+
+    now = datetime.now(timezone.utc)
+    start_date = (now - timedelta(days=days - 1)).date()
+    end_date = (now + timedelta(days=1)).date()  # exclusive
+
+    start_dt = datetime(start_date.year, start_date.month, start_date.day, tzinfo=timezone.utc)
+    end_dt = datetime(end_date.year, end_date.month, end_date.day, tzinfo=timezone.utc)
+    start_ms = int(start_dt.timestamp() * 1000)
+    end_ms = int(end_dt.timestamp() * 1000)
+
+    # Pre-seed days with zero counts
+    counts_by_day: Dict[str, int] = {}
+    for i in range(days):
+        d = (start_date + timedelta(days=i)).isoformat()
+        counts_by_day[d] = 0
+
+    query = (
+        db.query(EventDB.timestamp_ms)
+        .filter(EventDB.api_key == api_key)
+        .filter(EventDB.timestamp_ms >= start_ms)
+        .filter(EventDB.timestamp_ms < end_ms)
+    )
+    if event_name:
+        query = query.filter(EventDB.event_name == event_name)
+
+    for (ts_ms,) in query.all():
+        day = datetime.fromtimestamp(ts_ms / 1000, tz=timezone.utc).date().isoformat()
+        if day in counts_by_day:
+            counts_by_day[day] += 1
+
+    return [{"date": d, "count": counts_by_day[d]} for d in sorted(counts_by_day.keys())]
 
 
 @router.post("/funnel")

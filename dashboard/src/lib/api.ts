@@ -20,6 +20,12 @@ export interface EventCount {
   [eventName: string]: number;
 }
 
+/** Timeseries point (bucketed counts) */
+export interface TimeseriesPoint {
+  date: string; // YYYY-MM-DD (UTC)
+  count: number;
+}
+
 /** A saved funnel definition */
 export interface FunnelDefinition {
   id: string;
@@ -170,6 +176,22 @@ class ApiClient {
       `${API_BASE_URL}/analytics/event-counts?api_key=${this.apiKey}`
     );
     if (!response.ok) throw new Error("Failed to fetch event counts");
+    return response.json();
+  }
+
+  /**
+   * Daily total event volume for last N days (UTC).
+   * Optionally filter to a single event name.
+   */
+  async getEventVolume(days = 7, eventName?: string): Promise<TimeseriesPoint[]> {
+    const params = new URLSearchParams({
+      api_key: this.apiKey,
+      days: String(days),
+    });
+    if (eventName) params.set("event_name", eventName);
+
+    const response = await fetch(`${API_BASE_URL}/analytics/event-volume?${params}`);
+    if (!response.ok) throw new Error("Failed to fetch event volume");
     return response.json();
   }
 

@@ -7,6 +7,8 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -73,6 +75,12 @@ export function DashboardPage() {
   const { data: insights, isLoading: loadingInsights } = useQuery({
     queryKey: ["insights", apiKey],
     queryFn: () => api.getInsightHistory(),
+    enabled: hasApiKey,
+  });
+
+  const { data: eventVolume, isLoading: loadingEventVolume } = useQuery({
+    queryKey: ["eventVolume", apiKey],
+    queryFn: () => api.getEventVolume(7),
     enabled: hasApiKey,
   });
 
@@ -160,7 +168,76 @@ export function DashboardPage() {
         />
       </div>
 
-      {/* Under-KPI primary charts row */}
+      {/* Under-KPI primary chart (full-width) */}
+      <Card className="border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Events (last 7 days)</CardTitle>
+          <p className="text-sm text-slate-400">Daily total event volume</p>
+        </CardHeader>
+        <CardContent>
+          {loadingEventVolume ? (
+            <div className="space-y-2">
+              <div className="h-4 w-1/3 rounded bg-slate-800/80" />
+              <div className="h-4 w-2/3 rounded bg-slate-800/70" />
+              <div className="h-4 w-1/2 rounded bg-slate-800/60" />
+              <div className="h-4 w-3/4 rounded bg-slate-800/50" />
+              <div className="h-4 w-2/5 rounded bg-slate-800/40" />
+            </div>
+          ) : !eventVolume || eventVolume.length === 0 ? (
+            <div className="text-sm text-slate-500">No data yet.</div>
+          ) : (
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={eventVolume} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+                  <CartesianGrid stroke="rgba(148, 163, 184, 0.25)" vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fill: "rgba(148, 163, 184, 0.9)", fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    interval="preserveStartEnd"
+                    tickFormatter={(value: string) => {
+                      // Parse YYYY-MM-DD as UTC to avoid local timezone shifting the day label.
+                      const d = new Date(`${value}T00:00:00Z`);
+                      return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+                    }}
+                  />
+                  <YAxis
+                    width={56}
+                    tick={{ fill: "rgba(148, 163, 184, 0.9)", fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(v: number) => v.toLocaleString()}
+                  />
+                  <Tooltip
+                    cursor={{ stroke: "rgba(148, 163, 184, 0.25)" }}
+                    contentStyle={{
+                      background: "rgba(15, 23, 42, 0.9)",
+                      border: "1px solid rgba(148, 163, 184, 0.25)",
+                      borderRadius: 10,
+                      color: "white",
+                    }}
+                    labelStyle={{ color: "rgba(226, 232, 240, 0.95)" }}
+                    formatter={(value: unknown) =>
+                      typeof value === "number" ? value.toLocaleString() : String(value)
+                    }
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="count"
+                    stroke="#8b5cf6"
+                    strokeWidth={2}
+                    dot={{ r: 3, fill: "#8b5cf6" }}
+                    activeDot={{ r: 5 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Under-KPI secondary charts row */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950">
           <CardHeader className="pb-3">
