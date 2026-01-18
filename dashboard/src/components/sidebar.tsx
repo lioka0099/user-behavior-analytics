@@ -13,18 +13,12 @@ import {
   Sparkles,
 } from "lucide-react";
 
-/**
- * Navigation items for the sidebar
- * Each item has a name, URL path, and icon
- */
-const navigation = [
-  { name: "Apps", href: "/apps", icon: FolderKanban },
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Funnels", href: "/funnels", icon: GitBranch },
-  { name: "Insights", href: "/insights", icon: Lightbulb },
-  { name: "Events", href: "/events", icon: Activity },
-  { name: "Settings", href: "/settings", icon: Settings },
-];
+function getAppIdFromPath(pathname: string): string | null {
+  const segments = pathname.split("/").filter(Boolean);
+  // /apps/[appId]/...
+  if (segments[0] !== "apps") return null;
+  return segments[1] || null;
+}
 
 /**
  * Sidebar component - fixed left navigation
@@ -38,6 +32,20 @@ const navigation = [
 export function Sidebar() {
   // usePathname() returns current URL path (e.g., "/funnels")
   const pathname = usePathname();
+  const appId = getAppIdFromPath(pathname);
+
+  // Sidebar is only rendered inside /apps/[appId]/... (see AppLayout),
+  // so appId should always be present. Fall back safely anyway.
+  const base = appId ? `/apps/${appId}` : "/apps";
+
+  const navigation = [
+    { name: "Apps", href: "/apps", icon: FolderKanban },
+    { name: "Dashboard", href: `${base}/dashboard`, icon: LayoutDashboard },
+    { name: "Funnels", href: `${base}/funnels`, icon: GitBranch },
+    { name: "Insights", href: `${base}/insights`, icon: Lightbulb },
+    { name: "Events", href: `${base}/events`, icon: Activity },
+    { name: "Settings", href: `${base}/settings`, icon: Settings },
+  ];
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-slate-800 bg-slate-950">
@@ -56,7 +64,10 @@ export function Sidebar() {
       <nav className="flex flex-col gap-1 p-4">
         {navigation.map((item) => {
           // Check if this link is the current page
-          const isActive = pathname === item.href;
+          const isActive =
+            item.href === "/apps"
+              ? pathname === "/apps"
+              : pathname === item.href || pathname.startsWith(item.href + "/");
           
           return (
             <Link

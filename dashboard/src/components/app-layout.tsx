@@ -15,14 +15,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = pathname === "/login" || pathname === "/register";
   const isAppsListPage = pathname === "/apps";
+  const isInsideApp = pathname.startsWith("/apps/") && !isAppsListPage;
 
   // Auth pages (login/register) - no sidebar, no protection
   if (isAuthPage) {
     return <>{children}</>;
   }
 
-  // Protected pages - no sidebar for apps list, sidebar everywhere else
-  if (isAppsListPage) {
+  // Protected pages - no sidebar unless we're inside a specific app
+  if (!isInsideApp) {
     return (
       <main className="min-h-screen">
         <div className="p-8">
