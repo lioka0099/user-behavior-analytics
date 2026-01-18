@@ -7,8 +7,11 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   Line,
   LineChart,
+  Pie,
+  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -97,6 +100,32 @@ export function DashboardPage() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10)
     : [];
+
+  const donutTopN = 8;
+  const donutData = (() => {
+    if (!eventCounts) return null;
+
+    const colorForIndex = (idx: number) => {
+      const hue = (idx * 137.508) % 360;
+      const sat = 78;
+      const light = 55;
+      return `hsl(${hue} ${sat}% ${light}%)`;
+    };
+
+    const entries = Object.entries(eventCounts)
+      .map(([name, count]) => ({ name, value: count }))
+      .sort((a, b) => b.value - a.value);
+
+    const top = entries.slice(0, donutTopN).map((e, idx) => ({
+      ...e,
+      color: colorForIndex(idx),
+    }));
+
+    const otherValue = entries.slice(donutTopN).reduce((sum, e) => sum + e.value, 0);
+    if (otherValue > 0) top.push({ name: "Other", value: otherValue, color: "#64748b" });
+
+    return top;
+  })();
 
   if (!hasApiKey) {
     return (
@@ -300,18 +329,81 @@ export function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Placeholder for the next step (Primary Funnel visualization) */}
         <Card className="border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Primary Funnel</CardTitle>
-            <p className="text-sm text-slate-400">
-              Coming next: sessions per step + conversion
-            </p>
+            <CardTitle className="text-base">Event Mix</CardTitle>
+            <p className="text-sm text-slate-400">Top {donutTopN} events + Other</p>
           </CardHeader>
           <CardContent>
-            <div className="flex min-h-[140px] items-center justify-center rounded-lg border border-dashed border-slate-700 bg-slate-900/30 text-sm text-slate-500">
-              Funnel chart placeholder
-            </div>
+            {loadingEvents ? (
+              <div className="space-y-2">
+                <div className="h-4 w-1/3 rounded bg-slate-800/80" />
+                <div className="h-4 w-2/3 rounded bg-slate-800/70" />
+                <div className="h-4 w-1/2 rounded bg-slate-800/60" />
+                <div className="h-4 w-3/4 rounded bg-slate-800/50" />
+              </div>
+            ) : !donutData || donutData.length === 0 ? (
+              <div className="text-sm text-slate-500">No event data yet.</div>
+            ) : (
+              <div className="space-y-4">
+                <div className="h-56">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Tooltip
+                        contentStyle={{
+                          background: "rgba(15, 23, 42, 0.9)",
+                          border: "1px solid rgba(148, 163, 184, 0.25)",
+                          borderRadius: 10,
+                          color: "rgba(226, 232, 240, 0.95)",
+                        }}
+                        labelStyle={{ color: "rgba(226, 232, 240, 0.95)" }}
+                        itemStyle={{ color: "rgba(226, 232, 240, 0.95)" }}
+                        formatter={(value: unknown, name: unknown) => {
+                          const v = typeof value === "number" ? value : Number(value);
+                          const total = donutData.reduce((s, x) => s + x.value, 0);
+                          const pct = total > 0 ? (v / total) * 100 : 0;
+                          const label = typeof name === "string" ? name : "Event";
+                          return [`${v.toLocaleString()} (${pct.toFixed(1)}%)`, label];
+                        }}
+                      />
+                      <Pie
+                        data={donutData}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={60}
+                        outerRadius={88}
+                        paddingAngle={2}
+                        stroke="rgba(148, 163, 184, 0.18)"
+                        strokeWidth={1}
+                        isAnimationActive={false}
+                        label={false}
+                      >
+                        {donutData.map((entry) => (
+                          <Cell key={entry.name} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="ba-scrollbar max-h-40 space-y-2 overflow-auto pr-2">
+                  {donutData.map((e) => (
+                    <div key={e.name} className="flex items-center justify-between gap-3 text-sm">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: e.color }}
+                        />
+                        <span className="truncate text-slate-200">{e.name}</span>
+                      </div>
+                      <span className="shrink-0 tabular-nums text-slate-300">
+                        {e.value.toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
