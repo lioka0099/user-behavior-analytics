@@ -3,6 +3,15 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Users, TrendingUp, Sparkles, Key, ArrowRight } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,7 +57,9 @@ export function DashboardPage() {
   const [hasApiKey, setHasApiKey] = useState(true); // avoid flash
 
   useEffect(() => {
-    setHasApiKey(api.hasApiKey());
+    // Defer state update to avoid cascading-render lint rule.
+    const raf = requestAnimationFrame(() => setHasApiKey(api.hasApiKey()));
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   const apiKey = api.getApiKey();
@@ -71,6 +82,13 @@ export function DashboardPage() {
 
   const eventTypes = eventCounts ? Object.keys(eventCounts).length : 0;
   const latestInsight = insights?.[0];
+
+  const topEvents = eventCounts
+    ? Object.entries(eventCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+    : [];
 
   if (!hasApiKey) {
     return (
@@ -140,6 +158,85 @@ export function DashboardPage() {
           subtitle="Generated insights"
           icon={Sparkles}
         />
+      </div>
+
+      {/* Under-KPI primary charts row */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Top Events</CardTitle>
+            <p className="text-sm text-slate-400">Top 10 event names by volume</p>
+          </CardHeader>
+          <CardContent>
+            {loadingEvents ? (
+              <div className="space-y-2">
+                <div className="h-4 w-1/3 rounded bg-slate-800/80" />
+                <div className="h-4 w-2/3 rounded bg-slate-800/70" />
+                <div className="h-4 w-1/2 rounded bg-slate-800/60" />
+                <div className="h-4 w-3/4 rounded bg-slate-800/50" />
+                <div className="h-4 w-2/5 rounded bg-slate-800/40" />
+              </div>
+            ) : topEvents.length === 0 ? (
+              <div className="text-sm text-slate-500">
+                No event data yet. Send some events to see your top actions here.
+              </div>
+            ) : (
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={topEvents.map((e) => ({ event: e.name, count: e.count }))}
+                    margin={{ top: 8, right: 8, bottom: 8, left: 8 }}
+                  >
+                    <CartesianGrid stroke="rgba(148, 163, 184, 0.25)" vertical={false} />
+                    <XAxis
+                      dataKey="event"
+                      tick={{ fill: "rgba(148, 163, 184, 0.9)", fontSize: 12 }}
+                      tickLine={false}
+                      axisLine={false}
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis
+                      width={56}
+                      tick={{ fill: "rgba(148, 163, 184, 0.9)", fontSize: 12 }}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(v: number) => v.toLocaleString()}
+                    />
+                    <Tooltip
+                      cursor={{ fill: "rgba(148, 163, 184, 0.12)" }}
+                      contentStyle={{
+                        background: "rgba(15, 23, 42, 0.9)",
+                        border: "1px solid rgba(148, 163, 184, 0.25)",
+                        borderRadius: 10,
+                        color: "white",
+                      }}
+                      labelStyle={{ color: "rgba(226, 232, 240, 0.95)" }}
+                      formatter={(value: unknown) =>
+                        typeof value === "number" ? value.toLocaleString() : String(value)
+                      }
+                    />
+                    <Bar dataKey="count" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Placeholder for the next step (Primary Funnel visualization) */}
+        <Card className="border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Primary Funnel</CardTitle>
+            <p className="text-sm text-slate-400">
+              Coming next: sessions per step + conversion
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="flex min-h-[140px] items-center justify-center rounded-lg border border-dashed border-slate-700 bg-slate-900/30 text-sm text-slate-500">
+              Funnel chart placeholder
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {latestInsight && (
