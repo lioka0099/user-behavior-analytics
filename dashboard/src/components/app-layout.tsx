@@ -14,13 +14,24 @@ import { ProtectedRoute } from "@/components/protected-route";
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isAppsListPage = pathname === "/apps";
 
   // Auth pages (login/register) - no sidebar, no protection
   if (isAuthPage) {
     return <>{children}</>;
   }
 
-  // Protected pages - show sidebar and protect route
+  // Protected pages - no sidebar for apps list, sidebar everywhere else
+  if (isAppsListPage) {
+    return (
+      <main className="min-h-screen">
+        <div className="p-8">
+          <ProtectedRoute>{children}</ProtectedRoute>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <>
       <Sidebar />
