@@ -8,3 +8,5 @@ psycopg2-binary
 gunicorn
 pyjwt[crypto]
 httpx
+virtualenv
+certifi

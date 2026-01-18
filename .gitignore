@@ -1,85 +1,254 @@
+# ============================================
+# Global / System Files
+# ============================================
+
 # macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
 
-# Python
-__pycache__/
-*.pyc
-.env
-.venv
-
-# Android / Gradle
-.gradle/
-build/
-local.properties
-*.iml
-
-# Android Studio
+# IDE
+.vscode/
 .idea/
-captures/
+*.swp
+*.swo
+*~
 
 # Logs
 *.log
+*.log.*
+logs/
 
-# backend
-/backend/app/_pycache_
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.cache
 
-# Dashboard
-/dashboard/node_modules
-/dashboard/.pnp
-/dashboard.pnp.*
-/dashboard.yarn/*
-/dashboard!.yarn/patches
-/dashboard!.yarn/plugins
-/dashboard!.yarn/releases
-/dashboard!.yarn/versions
-/dashboard# testing
-/dashboard/coverage
-/dashboard# next.js
-/dashboard/.next/
-/dashboard/out/
-/dashboard# production
-/dashboard/build
-/dashboard# misc
-/dashboard.DS_Store
-/dashboard*.pem
-/dashboard# debug
-/dashboardnpm-debug.log*
-/dashboardyarn-debug.log*
-/dashboardyarn-error.log*
-/dashboard.pnpm-debug.log*
-/dashboard# env files (can opt-in for committing if needed)
-/dashboard.env*
-/dashboard# vercel
-/dashboard.vercel
-/dashboard# typescript
-/dashboard*.tsbuildinfo
-/dashboardnext-env.d.ts
+# direnv
+.envrc
+.direnv/
 
+# ============================================
+# Backend (Python/FastAPI)
+# ============================================
 
-# demo-app/ShopFlow
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+backend/venv/
+backend/.venv/
+backend/env/
+backend/ENV/
+backend/env.bak/
+backend/venv.bak/
+**/venv/
+**/.venv/
+**/env/
+**/.env/
+.venv/
+venv/
+env/
+ENV/
+
+# Environment variables
+backend/.env
+backend/.env.*
+backend/.env.local
+backend/.env.*.local
+**/.env
+**/.env.*
+**/.env.local
+**/.env.*.local
+!.env.example
+
+# Python cache
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/**/*.pyo
+backend/**/*.pyd
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.ruff_cache/
+backend/.coverage
+backend/htmlcov/
+backend/.tox/
+backend/dist/
+backend/build/
+backend/*.egg-info/
+backend/.eggs/
+
+# Database
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
+backend/analytics.db
+
+# ============================================
+# Dashboard (Next.js/TypeScript)
+# ============================================
+
+# Dependencies
+dashboard/node_modules/
+dashboard/.pnp
+dashboard/.pnp.*
+dashboard/.yarn/*
+dashboard!.yarn/patches
+dashboard!.yarn/plugins
+dashboard!.yarn/releases
+dashboard!.yarn/versions
+
+# Testing
+dashboard/coverage/
+dashboard/.nyc_output/
+
+# Next.js
+dashboard/.next/
+dashboard/out/
+dashboard/.next/
+dashboard/next-env.d.ts
+
+# Production builds
+dashboard/build/
+dashboard/dist/
+
+# Misc
+dashboard/.DS_Store
+dashboard/*.pem
+dashboard/tsconfig.tsbuildinfo
+dashboard*.tsbuildinfo
+
+# Debug logs
+dashboard/npm-debug.log*
+dashboard/yarn-debug.log*
+dashboard/yarn-error.log*
+dashboard/pnpm-debug.log*
+dashboard/.pnpm-debug.log*
+
+# Environment variables
+dashboard/.env
+dashboard/.env.*
+dashboard/.env.local
+dashboard/.env.*.local
+!dashboard/.env.example
+
+# Vercel
+dashboard/.vercel/
+dashboard.vercel
+
+# TypeScript
+dashboard*.tsbuildinfo
+dashboardnext-env.d.ts
+
+# ============================================
+# Android SDK / App
+# ============================================
+
+# Gradle
+sdk/android/.gradle/
+sdk/android/build/
+sdk/android/**/build/
+sdk/android/.gradle/
+sdk/android/gradle-app.setting
+sdk/android/!gradle-wrapper.jar
+sdk/android/.gradletasknamecache
+
+# Android Studio / IntelliJ IDEA
+sdk/android/.idea/
+sdk/android/*.iml
+sdk/android/**/*.iml
+sdk/android/.idea/caches/
+sdk/android/.idea/libraries/
+sdk/android/.idea/modules.xml
+sdk/android/.idea/workspace.xml
+sdk/android/.idea/navEditor.xml
+sdk/android/.idea/assetWizardSettings.xml
+sdk/android/.idea/gradle.xml
+sdk/android/.idea/compiler.xml
+sdk/android/.idea/jarRepositories.xml
+sdk/android/.idea/misc.xml
+
+# Local configuration
+sdk/android/local.properties
+sdk/android/**/local.properties
+
+# Generated files
+sdk/android/.externalNativeBuild/
+sdk/android/.cxx/
+sdk/android/externalNativeBuild/
+sdk/android/cxx/
+sdk/android/captures/
+
+# Android artifacts
+sdk/android/*.apk
+sdk/android/*.ap_
+sdk/android/*.aab
+sdk/android/*.dex
+sdk/android/*.class
+
+# OS files
+sdk/android/.DS_Store
+sdk/android/**/.DS_Store
+
+# ============================================
+# Demo App (Android)
+# ============================================
+
+# Gradle
+demo-app/ShopFlow/.gradle/
+demo-app/ShopFlow/build/
+demo-app/ShopFlow/**/build/
+demo-app/ShopFlow/gradle-app.setting
+demo-app/ShopFlow/!gradle-wrapper.jar
+demo-app/ShopFlow/.gradletasknamecache
+
+# Android Studio / IntelliJ IDEA
+demo-app/ShopFlow/.idea/
 demo-app/ShopFlow/*.iml
-demo-app/ShopFlow/.gradle
-demo-app/ShopFlow/local.properties
-demo-app/ShopFlow/.idea/caches
-demo-app/ShopFlow/.idea/libraries
+demo-app/ShopFlow/**/*.iml
+demo-app/ShopFlow/.idea/caches/
+demo-app/ShopFlow/.idea/libraries/
 demo-app/ShopFlow/.idea/modules.xml
 demo-app/ShopFlow/.idea/workspace.xml
 demo-app/ShopFlow/.idea/navEditor.xml
 demo-app/ShopFlow/.idea/assetWizardSettings.xml
-demo-app/ShopFlow.DS_Store
-demo-app/ShopFlow/build
-demo-app/ShopFlow/captures
-demo-app/ShopFlow.externalNativeBuild
-demo-app/ShopFlow.cxx
-demo-app/ShopFlowlocal.properties
 
+# Local configuration
+demo-app/ShopFlow/local.properties
+demo-app/ShopFlow/**/local.properties
 
-# sdk/android
-/sdk/android/node_modules
-/sdk/android/.pnp
-/sdk/android.pnp.*
-/sdk/android.yarn/*
-/sdk/android!.yarn/patches
-/sdk/android!.yarn/plugins
-/sdk/android!.yarn/releases
-/sdk/android!.yarn/versions
+# Generated files
+demo-app/ShopFlow/.externalNativeBuild/
+demo-app/ShopFlow/.cxx/
+demo-app/ShopFlow/externalNativeBuild/
+demo-app/ShopFlow/cxx/
+demo-app/ShopFlow/captures/
+
+# Android artifacts
+demo-app/ShopFlow/*.apk
+demo-app/ShopFlow/*.ap_
+demo-app/ShopFlow/*.aab
+
+# OS files
+demo-app/ShopFlow/.DS_Store
+demo-app/ShopFlow/**/.DS_Store
+
+# ============================================
+# Project Root
+# ============================================
+
+# Environment files at root
+.env
+.env.*
+.env.local
+!.env.example
+
+# IDE files
+.vscode/
+.idea/

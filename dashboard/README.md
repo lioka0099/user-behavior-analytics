@@ -2,6 +2,16 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### Node version
+
+This dashboard is intended to run on **Node.js 20 (LTS)**.
+
+If you use `nvm`, from the `dashboard/` directory run:
+
+```bash
+nvm use
+```
+
 First, run the development server:
 
 ```bash

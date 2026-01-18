@@ -4,12 +4,18 @@ Authentication utilities for Supabase JWT validation.
 Validates JWT tokens from Supabase Auth and extracts user information.
 """
 
+import inspect
+import os
+import ssl
+import logging
 import jwt
 from jwt import PyJWKClient
 from typing import Optional
 from fastapi import HTTPException, Depends, Header
 from functools import lru_cache
 from app.core.config import SUPABASE_URL, SUPABASE_JWT_SECRET, SUPABASE_ANON_KEY
+
+logger = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=1)
@@ -35,6 +41,24 @@ def get_jwks_client() -> PyJWKClient:
     else:
         headers = None
 
+    # macOS dev environments sometimes lack a usable system CA bundle, causing:
+    # SSL: CERTIFICATE_VERIFY_FAILED when fetching the JWKS.
+    # Prefer certifi's CA bundle when available.
+    try:
+        import certifi  # type: ignore
+
+        # For urllib-based clients, SSL_CERT_FILE is respected.
+        os.environ.setdefault("SSL_CERT_FILE", certifi.where())
+
+        # Newer PyJWT versions accept ssl_context; use it when supported.
+        sig = inspect.signature(PyJWKClient)
+        if "ssl_context" in sig.parameters:
+            ssl_context = ssl.create_default_context(cafile=certifi.where())
+            return PyJWKClient(jwks_url, headers=headers, ssl_context=ssl_context)
+    except Exception:
+        # If certifi isn't installed or anything goes wrong, fall back to defaults.
+        pass
+
     return PyJWKClient(jwks_url, headers=headers)
 
 
@@ -51,6 +75,17 @@ def verify_supabase_token(token: str) -> dict:
     Raises:
         HTTPException: If token is invalid or expired
     """
+    # If neither JWKS (SUPABASE_URL) nor HS256 secret is configured, we can't verify anything.
+    # This is typically a local dev misconfiguration, so fail loudly with an actionable message.
+    if not SUPABASE_URL and not SUPABASE_JWT_SECRET:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Backend auth is not configured. Set SUPABASE_URL (recommended) "
+                "or SUPABASE_JWT_SECRET in the backend environment."
+            ),
+        )
+
     try:
         # Prefer JWKS validation (ES256/RS256)
         jwks_client = get_jwks_client()
@@ -79,8 +114,9 @@ def verify_supabase_token(token: str) -> dict:
                 return payload
             except Exception:
                 pass
-        # If JWKS fetch/validation fails, return 401 instead of 500
-        raise HTTPException(status_code=401, detail=f"Invalid token: {jwks_error}")
+        # If JWKS fetch/validation fails, don't leak internal SSL/network details to clients.
+        logger.warning("Supabase token validation failed via JWKS/HS256 fallback: %s", jwks_error)
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 
 def get_current_user(

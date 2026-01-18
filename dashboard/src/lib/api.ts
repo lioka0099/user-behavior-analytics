@@ -100,8 +100,16 @@ async function getAuthToken(): Promise<string | null> {
   
   try {
     const { supabase } = await import("./supabase");
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token || null;
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      console.warn("Failed to get session:", error);
+      return null;
+    }
+    if (!session) {
+      console.warn("No active session found");
+      return null;
+    }
+    return session.access_token || null;
   } catch (error) {
     console.warn("Failed to get auth token:", error);
     return null;
@@ -243,6 +251,9 @@ class ApiClient {
     });
     if (!response.ok) {
       if (response.status === 401) {
+        // Keep UI messages clean; log any server detail to console for debugging.
+        const error = await response.json().catch(() => null);
+        if (error) console.warn("Apps request unauthorized:", error);
         throw new Error("Authentication required. Please log in.");
       }
       throw new Error("Failed to fetch apps");

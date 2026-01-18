@@ -11,6 +11,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",  # Local development
+        "http://127.0.0.1:3000",  # Local development (IPv4)
         "https://user-behavior-analytics.vercel.app",  # Vercel deployment
         "https://*.vercel.app",  # Vercel preview deployments
     ],

@@ -13,7 +13,7 @@
  *    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
  */
 
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 // Validate environment variables at runtime
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -28,12 +28,19 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 /**
  * Create a Supabase client for browser-side usage.
- * This client handles authentication state automatically.
+ * This client handles authentication state automatically using localStorage.
  */
 export function createClient() {
-  return createBrowserClient(
+  return createSupabaseClient(
     supabaseUrl || "",
-    supabaseAnonKey || ""
+    supabaseAnonKey || "",
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    }
   );
 }
 
