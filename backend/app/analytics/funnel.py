@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 from app.storage.events import get_all_events
 
 
-def run_funnel_for_steps(steps: List[str], db: Session):
-    events = get_all_events(db)
+def run_funnel_for_steps(steps: List[str], db: Session, api_key: str | None = None):
+    events = get_all_events(db, api_key)
 
     sessions = {}
     for event in events:

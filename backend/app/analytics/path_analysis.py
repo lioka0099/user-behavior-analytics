@@ -2,8 +2,8 @@ from typing import Dict
 from sqlalchemy.orm import Session
 from app.storage.events import get_all_events
 
-def analyze_paths(db: Session, max_depth: int = 10) -> Dict[str, int]:
-    events = get_all_events(db)
+def analyze_paths(db: Session, max_depth: int = 10, api_key: str | None = None) -> Dict[str, int]:
+    events = get_all_events(db, api_key)
 
     sessions = {}
     for event in events:

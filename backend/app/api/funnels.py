@@ -46,7 +46,7 @@ def run_funnel_definition(
     if not definition:
         raise HTTPException(status_code=404, detail="Definition not found")
 
-    result = run_funnel_for_steps(definition.steps, db)
+    result = run_funnel_for_steps(definition.steps, db, api_key=request.api_key)
 
     return {
         "definition_id": definition.id,

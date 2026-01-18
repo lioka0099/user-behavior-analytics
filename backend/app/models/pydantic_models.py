@@ -50,6 +50,7 @@ def create_funnel_definition(
 
 
 class FunnelRequest(BaseModel):
+    api_key: Optional[str] = None
     steps: List[str]
 
 
@@ -63,6 +64,7 @@ class RunFunnelRequest(BaseModel):
     api_key: str
 
 class PathAnalysisRequest(BaseModel):
+    api_key: Optional[str] = None
     max_depth: int = 10
 
 class InsightDiff(BaseModel):

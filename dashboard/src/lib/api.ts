@@ -97,7 +97,7 @@ const getStoredApiKey = (): string => {
  */
 async function getAuthToken(): Promise<string | null> {
   if (typeof window === "undefined") return null;
-  
+
   try {
     const { supabase } = await import("./supabase");
     const { data: { session }, error } = await supabase.auth.getSession();
@@ -121,16 +121,16 @@ async function getAuthToken(): Promise<string | null> {
  */
 async function getAuthHeaders(includeContentType = true): Promise<HeadersInit> {
   const headers: HeadersInit = {};
-  
+
   if (includeContentType) {
     headers["Content-Type"] = "application/json";
   }
-  
+
   const token = await getAuthToken();
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
-  
+
   return headers;
 }
 
@@ -204,7 +204,7 @@ class ApiClient {
     const response = await fetch(`${API_BASE_URL}/analytics/funnel`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ steps }),
+      body: JSON.stringify({ api_key: this.apiKey, steps }),
     });
     if (!response.ok) throw new Error("Failed to run funnel");
     return response.json();

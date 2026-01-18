@@ -6,13 +6,15 @@ from app.storage.events import get_all_events
 class TimeToCompleteRequest(BaseModel):
     start_event: str
     end_event: str
+    api_key: str | None = None
 
 def calculate_time_to_complete(
     start_event: str,
     end_event: str,
-    db: Session
+    db: Session,
+    api_key: str | None = None
 ):
-    events = get_all_events(db)
+    events = get_all_events(db, api_key)
 
     sessions = {}
     for event in events:

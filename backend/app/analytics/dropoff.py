@@ -5,9 +5,10 @@ from app.storage.events import get_all_events
 
 def calculate_dropoff(
     steps: List[str],
-    db: Session
+    db: Session,
+    api_key: str | None = None
 ) -> Dict:
-    events = get_all_events(db)
+    events = get_all_events(db, api_key)
 
     sessions = {}
     for event in events:

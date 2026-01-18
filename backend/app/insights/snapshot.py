@@ -50,14 +50,14 @@ def build_analytics_snapshot(db: Session, api_key: str) -> dict:
         "avg_time_to_complete_ms": None,
         "unique_paths": 0,
         "error_count": 0,
-        "paths": [],
+        "paths": {},
         "funnels": {}
     }
     
     # 1. Analyze user paths
-    paths = analyze_paths(db, max_depth=5)
-    snapshot["paths"] = paths if isinstance(paths, list) else []
-    snapshot["unique_paths"] = len(snapshot["paths"])
+    paths = analyze_paths(db, max_depth=5, api_key=api_key)
+    snapshot["paths"] = paths
+    snapshot["unique_paths"] = len(paths)
     
     # 2. Get funnel definitions for this api_key
     funnel_defs = list_funnel_definitions(db, api_key)
@@ -68,7 +68,7 @@ def build_analytics_snapshot(db: Session, api_key: str) -> dict:
         steps = funnel_def.steps
         
         # Run funnel analysis
-        funnel_result = run_funnel_for_steps(steps, db)
+        funnel_result = run_funnel_for_steps(steps, db, api_key=api_key)
         snapshot["funnels"][funnel_name] = funnel_result
         
         # Use first funnel's conversion rate as primary metric
@@ -76,13 +76,13 @@ def build_analytics_snapshot(db: Session, api_key: str) -> dict:
             snapshot["conversion_rate"] = funnel_result.get("conversion_rate")
         
         # Calculate drop-off rates
-        dropoff_result = calculate_dropoff(steps, db)
+        dropoff_result = calculate_dropoff(steps, db, api_key=api_key)
         dropoff_rates = _calculate_dropoff_rates(dropoff_result, funnel_result)
         snapshot["dropoff_rates"].update(dropoff_rates)
         
         # Calculate time-to-complete for first funnel
         if snapshot["avg_time_to_complete_ms"] is None and len(steps) >= 2:
-            time_result = calculate_time_to_complete(steps[0], steps[-1], db)
+            time_result = calculate_time_to_complete(steps[0], steps[-1], db, api_key=api_key)
             snapshot["avg_time_to_complete_ms"] = time_result.get("average_ms")
     
     # 4. Count error events
@@ -129,14 +129,10 @@ def _count_error_events(db: Session, api_key: str) -> int:
     Returns:
         Count of error events
     """
-    events = get_all_events(db)
+    events = get_all_events(db, api_key)
     
     error_count = 0
     for event in events:
-        # Check if this event belongs to the api_key
-        if hasattr(event, 'api_key') and event.api_key != api_key:
-            continue
-            
         # Check if event name indicates an error
         event_name = event.event_name.lower()
         if 'error' in event_name:

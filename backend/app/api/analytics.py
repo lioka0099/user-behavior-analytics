@@ -46,16 +46,17 @@ def event_counts(api_key: str = None, db: Session = Depends(get_db)):
 @router.post("/funnel")
 def funnel_analysis(request: FunnelRequest, db: Session = Depends(get_db)):
     """Run funnel analysis for specified steps."""
-    return run_funnel_for_steps(request.steps, db)
+    return run_funnel_for_steps(request.steps, db, api_key=request.api_key)
 
 
 @router.post("/dropoff/debug")
 def debug_dropoff(
     steps: list[str],
+    api_key: str | None = None,
     db: Session = Depends(get_db)
 ):
     """Calculate drop-off at each funnel step."""
-    return calculate_dropoff(steps, db)
+    return calculate_dropoff(steps, db, api_key=api_key)
 
 
 @router.post("/time")
@@ -67,7 +68,8 @@ def time_to_complete(
     return calculate_time_to_complete(
         request.start_event,
         request.end_event,
-        db
+        db,
+        api_key=request.api_key
     )
 
 
@@ -78,7 +80,7 @@ def path_analysis(
 ):
     """Analyze user paths through the application."""
     return {
-        "paths": analyze_paths(db, request.max_depth)
+        "paths": analyze_paths(db, request.max_depth, api_key=request.api_key)
     }
 
 
