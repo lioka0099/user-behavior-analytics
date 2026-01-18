@@ -13,6 +13,7 @@ from typing import Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from collections import Counter
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.models.pydantic_models import FunnelRequest, PathAnalysisRequest
 from app.storage.events import get_all_events
@@ -40,9 +41,12 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 @router.get("/event-counts")
 def event_counts(api_key: str = None, db: Session = Depends(get_db)):
     """Get count of each event type, optionally filtered by api_key."""
-    events = get_all_events(db, api_key)
-    counts = Counter(event.event_name for event in events)
-    return dict(counts)
+    query = db.query(EventDB.event_name, func.count(EventDB.id)).group_by(EventDB.event_name)
+    if api_key:
+        query = query.filter(EventDB.api_key == api_key)
+
+    rows = query.all()
+    return {name: int(count) for (name, count) in rows}
 
 
 @router.get("/event-volume")
