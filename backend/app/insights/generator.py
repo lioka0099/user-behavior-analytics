@@ -23,6 +23,12 @@ def generate_insights(prompt: str) -> InsightResponse:
     """Generate insights from an analytics snapshot."""
     if LLM_PROVIDER == "openai":
         return generate_with_openai(prompt)
+    # Always return a structured response (never hang / return None)
+    return InsightResponse(
+        summary="LLM insights are not configured (LLM_PROVIDER != openai).",
+        insights=[],
+        recommendations=[],
+    )
 
 
 def generate_with_openai(prompt: str, mode: str = "default"):
@@ -33,23 +39,76 @@ def generate_with_openai(prompt: str, mode: str = "default"):
         prompt: The prompt to send to the LLM
         mode: "default" for InsightResponse, "trend" for InsightTrendResponse
     """
-    client = OpenAI(api_key=OPENAI_API_KEY)
+    # Bound LLM latency so the API never hangs long enough to time out in cloud.
+    # If OpenAI is slow/unavailable, we return a safe structured fallback.
+    client = OpenAI(api_key=OPENAI_API_KEY, timeout=10.0, max_retries=0)
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a senior product analytics expert."
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-        temperature=0.3
-    )
-    content = response.choices[0].message.content
+    # #region agent log
+    _t0 = None
+    try:
+        import time as _time, json as _json
+        _t0 = _time.time()
+        with open("/Users/lioka/Desktop/user-behavior-analytics/.cursor/debug.log", "a", encoding="utf-8") as f:
+            f.write(_json.dumps({
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "I3",
+                "location": "backend/app/insights/generator.py:generate_with_openai:entry",
+                "message": "openai call start",
+                "data": {"mode": mode, "prompt_len": len(prompt)},
+                "timestamp": int(_time.time() * 1000),
+            }) + "\n")
+    except Exception:
+        pass
+    # #endregion
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a senior product analytics expert."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.3
+        )
+        content = response.choices[0].message.content
+    except Exception as e:
+        # #region agent log
+        try:
+            import time as _time, json as _json
+            dur_ms = int((_time.time() - _t0) * 1000) if _t0 is not None else None
+            with open("/Users/lioka/Desktop/user-behavior-analytics/.cursor/debug.log", "a", encoding="utf-8") as f:
+                f.write(_json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "I3",
+                    "location": "backend/app/insights/generator.py:generate_with_openai:error",
+                    "message": "openai call failed",
+                    "data": {"error_type": type(e).__name__, "duration_ms": dur_ms},
+                    "timestamp": int(_time.time() * 1000),
+                }) + "\n")
+        except Exception:
+            pass
+        # #endregion
+
+        if mode == "trend":
+            return InsightTrendResponse(
+                summary="LLM request failed or timed out.",
+                changes=[],
+                risks=[],
+                opportunities=[],
+            )
+        return InsightResponse(
+            summary="LLM request failed or timed out.",
+            insights=[],
+            recommendations=[],
+        )
 
     if mode == "trend":
         return parse_trend_llm_response(content)

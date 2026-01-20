@@ -22,7 +22,16 @@ from app.db.models import EventDB
 from sqlalchemy import func
 
 
-def build_analytics_snapshot(db: Session, api_key: str, *, max_funnels: int | None = None) -> dict:
+def build_analytics_snapshot(
+    db: Session,
+    api_key: str,
+    *,
+    max_funnels: int | None = None,
+    include_paths: bool = True,
+    include_dropoffs: bool = True,
+    include_time: bool = True,
+    include_error_count: bool = True,
+) -> dict:
     """
     Build a comprehensive analytics snapshot for the given api_key.
     
@@ -74,22 +83,23 @@ def build_analytics_snapshot(db: Session, api_key: str, *, max_funnels: int | No
         pass
     # #endregion
     
-    # 1. Analyze user paths
-    _t_paths = None
-    try:
-        import time as _time
-        _t_paths = _time.time()
-    except Exception:
-        _t_paths = None
-    paths = analyze_paths(db, max_depth=5, api_key=api_key)
-    snapshot["paths"] = paths
-    snapshot["unique_paths"] = len(paths)
+    # 1. Analyze user paths (optional; can be expensive on large datasets)
     _paths_ms = None
-    try:
-        import time as _time
-        _paths_ms = int((_time.time() - _t_paths) * 1000) if _t_paths is not None else None
-    except Exception:
-        _paths_ms = None
+    if include_paths:
+        _t_paths = None
+        try:
+            import time as _time
+            _t_paths = _time.time()
+        except Exception:
+            _t_paths = None
+        paths = analyze_paths(db, max_depth=5, api_key=api_key)
+        snapshot["paths"] = paths
+        snapshot["unique_paths"] = len(paths)
+        try:
+            import time as _time
+            _paths_ms = int((_time.time() - _t_paths) * 1000) if _t_paths is not None else None
+        except Exception:
+            _paths_ms = None
     
     # 2. Get funnel definitions for this api_key
     funnel_defs = list_funnel_definitions(db, api_key)
@@ -126,25 +136,26 @@ def build_analytics_snapshot(db: Session, api_key: str, *, max_funnels: int | No
         if snapshot["conversion_rate"] is None:
             snapshot["conversion_rate"] = funnel_result.get("conversion_rate")
         
-        # Calculate drop-off rates
-        _t = None
-        try:
-            import time as _time
-            _t = _time.time()
-        except Exception:
+        # Calculate drop-off rates (optional)
+        if include_dropoffs:
             _t = None
-        dropoff_result = calculate_dropoff(steps, db, api_key=api_key)
-        try:
-            import time as _time
-            if _t is not None:
-                _ms_dropoff += int((_time.time() - _t) * 1000)
-        except Exception:
-            pass
-        dropoff_rates = _calculate_dropoff_rates(dropoff_result, funnel_result)
-        snapshot["dropoff_rates"].update(dropoff_rates)
+            try:
+                import time as _time
+                _t = _time.time()
+            except Exception:
+                _t = None
+            dropoff_result = calculate_dropoff(steps, db, api_key=api_key)
+            try:
+                import time as _time
+                if _t is not None:
+                    _ms_dropoff += int((_time.time() - _t) * 1000)
+            except Exception:
+                pass
+            dropoff_rates = _calculate_dropoff_rates(dropoff_result, funnel_result)
+            snapshot["dropoff_rates"].update(dropoff_rates)
         
-        # Calculate time-to-complete for first funnel
-        if snapshot["avg_time_to_complete_ms"] is None and len(steps) >= 2:
+        # Calculate time-to-complete for first funnel (optional)
+        if include_time and snapshot["avg_time_to_complete_ms"] is None and len(steps) >= 2:
             _t = None
             try:
                 import time as _time
@@ -160,20 +171,21 @@ def build_analytics_snapshot(db: Session, api_key: str, *, max_funnels: int | No
                 pass
             snapshot["avg_time_to_complete_ms"] = time_result.get("average_ms")
     
-    # 4. Count error events
-    _t_err = None
-    try:
-        import time as _time
-        _t_err = _time.time()
-    except Exception:
-        _t_err = None
-    snapshot["error_count"] = _count_error_events(db, api_key)
+    # 4. Count error events (optional)
     _err_ms = None
-    try:
-        import time as _time
-        _err_ms = int((_time.time() - _t_err) * 1000) if _t_err is not None else None
-    except Exception:
-        _err_ms = None
+    if include_error_count:
+        _t_err = None
+        try:
+            import time as _time
+            _t_err = _time.time()
+        except Exception:
+            _t_err = None
+        snapshot["error_count"] = _count_error_events(db, api_key)
+        try:
+            import time as _time
+            _err_ms = int((_time.time() - _t_err) * 1000) if _t_err is not None else None
+        except Exception:
+            _err_ms = None
 
     # #region agent log
     try:
