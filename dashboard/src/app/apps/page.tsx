@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FolderKanban, Plus, RefreshCw, ArrowRight } from "lucide-react";
+import { FolderKanban, Plus, RefreshCw, ArrowRight, Trash2 } from "lucide-react";
 
 import api from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +31,7 @@ export default function AppsPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Load all apps for the current user (Authorization header is added in api.getApps)
   const appsQuery = useQuery({
@@ -56,6 +57,31 @@ export default function AppsPage() {
     onError: (e: unknown) => {
       const message = e instanceof Error ? e.message : "Failed to create app";
       setError(message);
+    },
+  });
+
+  const deleteApp = useMutation({
+    mutationFn: async (appId: string) => {
+      setDeleteError(null);
+      await api.deleteApp(appId);
+      return appId;
+    },
+    onSuccess: async (deletedAppId) => {
+      // If the user deleted the currently-selected app, clear local selection + API key
+      if (typeof window !== "undefined") {
+        const currentAppIdKey = "analytics_current_app_id";
+        const current = localStorage.getItem(currentAppIdKey);
+        if (current === deletedAppId) {
+          localStorage.removeItem(currentAppIdKey);
+          api.setApiKey("");
+        }
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["apps"] });
+    },
+    onError: (e: unknown) => {
+      const message = e instanceof Error ? e.message : "Failed to delete app";
+      setDeleteError(message);
     },
   });
 
@@ -160,6 +186,11 @@ export default function AppsPage() {
         </CardHeader>
         <CardContent>
           {/* Loading / error / empty / list states */}
+          {deleteError && (
+            <div className="mb-4 rounded-lg border border-rose-500/20 bg-rose-950/20 p-4">
+              <p className="text-sm text-rose-400">{deleteError}</p>
+            </div>
+          )}
           {appsQuery.isLoading ? (
             <div className="flex items-center justify-center py-12">
               <RefreshCw className="h-6 w-6 animate-spin text-violet-500" />
@@ -202,13 +233,42 @@ export default function AppsPage() {
                           Created {new Date(app.created_at).toLocaleString()}
                         </p>
                       </div>
-                      {/* Later steps will implement the destination route */}
-                      <Link href={`/apps/${app.id}/dashboard`}>
-                        <Button className="bg-violet-600 hover:bg-violet-700">
-                          Open
-                          <ArrowRight className="ml-2 h-4 w-4" />
+                      <div className="flex shrink-0 items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-slate-700 bg-transparent text-rose-300 hover:border-rose-700/50 hover:bg-rose-950/30 hover:text-rose-200"
+                          onClick={() => {
+                            const ok = window.confirm(
+                              `Delete "${app.name}"? This cannot be undone.`
+                            );
+                            if (!ok) return;
+                            deleteApp.mutate(app.id);
+                          }}
+                          disabled={
+                            deleteApp.isPending && deleteApp.variables === app.id
+                          }
+                        >
+                          {deleteApp.isPending && deleteApp.variables === app.id ? (
+                            <>
+                              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </>
+                          )}
                         </Button>
-                      </Link>
+                        {/* Later steps will implement the destination route */}
+                        <Link href={`/apps/${app.id}/dashboard`}>
+                          <Button className="bg-violet-600 hover:bg-violet-700" size="sm">
+                            Open
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
