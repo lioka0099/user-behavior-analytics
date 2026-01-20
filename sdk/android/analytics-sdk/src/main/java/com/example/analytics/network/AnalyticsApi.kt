@@ -9,5 +9,5 @@ interface AnalyticsApi {
     @POST("/events")
     fun sendEvents(
         @Body batch: EventBatchDto
-    ): Call<Unit>
+    ): Call<IngestResponseDto>
 }

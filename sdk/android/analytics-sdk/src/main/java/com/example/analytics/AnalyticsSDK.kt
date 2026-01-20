@@ -5,6 +5,7 @@ import android.util.Log
 import java.util.UUID
 import com.example.analytics.network.EventBatchDto
 import com.example.analytics.network.EventMapper
+import com.example.analytics.network.IngestResponseDto
 import com.example.analytics.network.RetrofitClient
 
 object AnalyticsSDK {
@@ -92,20 +93,25 @@ object AnalyticsSDK {
             events = events.map { EventMapper.toDto(it) }
         )
 
-        api.sendEvents(batch).enqueue(object : retrofit2.Callback<Unit> {
+        api.sendEvents(batch).enqueue(object : retrofit2.Callback<IngestResponseDto> {
             override fun onResponse(
-                call: retrofit2.Call<Unit>,
-                response: retrofit2.Response<Unit>
+                call: retrofit2.Call<IngestResponseDto>,
+                response: retrofit2.Response<IngestResponseDto>
             ) {
                 if (response.isSuccessful) {
-                    Log.d(TAG, "✓ Events sent successfully (${response.code()})")
+                    val body = response.body()
+                    if (body != null) {
+                        Log.d(TAG, "✓ Events sent successfully (${response.code()}), ingested=${body.ingested}")
+                    } else {
+                        Log.d(TAG, "✓ Events sent successfully (${response.code()})")
+                    }
                 } else {
                     Log.e(TAG, "✗ Server returned error: ${response.code()} - ${response.errorBody()?.string()}")
                 }
             }
 
             override fun onFailure(
-                call: retrofit2.Call<Unit>,
+                call: retrofit2.Call<IngestResponseDto>,
                 t: Throwable
             ) {
                 Log.e(TAG, "✗ Failed to send events: ${t.message}", t)
