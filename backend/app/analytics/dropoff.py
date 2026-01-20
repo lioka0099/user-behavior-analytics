@@ -9,7 +9,6 @@ def calculate_dropoff(
     api_key: Optional[str] = None
 ) -> Dict:
     # PERF: only scan events that could affect this funnel, in DB order.
-    # The previous implementation loaded all events and sorted in Python.
     dropoffs = {step: 0 for step in steps}
     if not steps:
         return {"steps": steps, "dropoffs": dropoffs}
