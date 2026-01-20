@@ -1,34 +1,43 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 from sqlalchemy.orm import Session
-from app.storage.events import get_all_events
+from app.db.models import EventDB
 
 
 def calculate_dropoff(
     steps: List[str],
     db: Session,
-    api_key: str | None = None
+    api_key: Optional[str] = None
 ) -> Dict:
-    events = get_all_events(db, api_key)
-
-    sessions = {}
-    for event in events:
-        sessions.setdefault(event.session_id, []).append(event)
-
+    # PERF: only scan events that could affect this funnel, in DB order.
+    # The previous implementation loaded all events and sorted in Python.
     dropoffs = {step: 0 for step in steps}
+    if not steps:
+        return {"steps": steps, "dropoffs": dropoffs}
 
-    for session_events in sessions.values():
-        ordered = sorted(session_events, key=lambda e: e.timestamp_ms)
-        event_names = [e.event_name for e in ordered]
+    q = db.query(EventDB.session_id, EventDB.event_name, EventDB.timestamp_ms)
+    if api_key is not None:
+        q = q.filter(EventDB.api_key == api_key)
+    q = q.filter(EventDB.event_name.in_(steps))
+    q = q.order_by(EventDB.session_id, EventDB.timestamp_ms)
 
-        last_step_index = -1
-        for i, step in enumerate(steps):
-            if step in event_names:
-                last_step_index = i
-            else:
-                break
+    current_session_id = None
+    step_index = 0
 
-        if last_step_index >= 0:
-            dropoffs[steps[last_step_index]] += 1
+    for (session_id, event_name, _ts) in q.yield_per(5000):
+        if current_session_id is None:
+            current_session_id = session_id
+            step_index = 0
+        elif session_id != current_session_id:
+            if step_index > 0:
+                dropoffs[steps[step_index - 1]] += 1
+            current_session_id = session_id
+            step_index = 0
+
+        if step_index < len(steps) and event_name == steps[step_index]:
+            step_index += 1
+
+    if current_session_id is not None and step_index > 0:
+        dropoffs[steps[step_index - 1]] += 1
 
     return {
         "steps": steps,

@@ -1,45 +1,61 @@
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from statistics import mean, median
-from app.storage.events import get_all_events
+from typing import Optional
+from app.db.models import EventDB
 
 class TimeToCompleteRequest(BaseModel):
     start_event: str
     end_event: str
-    api_key: str | None = None
+    api_key: Optional[str] = None
 
 def calculate_time_to_complete(
     start_event: str,
     end_event: str,
     db: Session,
-    api_key: str | None = None
+    api_key: Optional[str] = None
 ):
-    events = get_all_events(db, api_key)
-
-    sessions = {}
-    for event in events:
-        sessions.setdefault(event.session_id, []).append(event)
-
     durations = []
+    if not start_event or not end_event:
+        return {
+            "start_event": start_event,
+            "end_event": end_event,
+            "count": 0,
+            "average_ms": None,
+            "median_ms": None,
+            "min_ms": None,
+            "max_ms": None,
+        }
 
-    for session_events in sessions.values():
-        ordered = sorted(session_events, key=lambda e: e.timestamp_ms)
+    # PERF: only scan the two relevant event types in DB order.
+    q = db.query(EventDB.session_id, EventDB.event_name, EventDB.timestamp_ms)
+    if api_key is not None:
+        q = q.filter(EventDB.api_key == api_key)
+    q = q.filter(EventDB.event_name.in_([start_event, end_event]))
+    q = q.order_by(EventDB.session_id, EventDB.timestamp_ms)
 
-        start_time = None
-        end_time = None
+    current_session_id = None
+    start_time = None
+    found_duration = False
 
-        for e in ordered:
-            if e.event_name == start_event and start_time is None:
-                start_time = e.timestamp_ms
-            elif (
-                e.event_name == end_event
-                and start_time is not None
-            ):
-                end_time = e.timestamp_ms
-                break
+    for (session_id, event_name, ts_ms) in q.yield_per(5000):
+        if current_session_id is None:
+            current_session_id = session_id
+            start_time = None
+            found_duration = False
+        elif session_id != current_session_id:
+            current_session_id = session_id
+            start_time = None
+            found_duration = False
 
-        if start_time is not None and end_time is not None:
-            durations.append(end_time - start_time)
+        if found_duration:
+            continue
+
+        if event_name == start_event and start_time is None:
+            start_time = ts_ms
+        elif event_name == end_event and start_time is not None:
+            durations.append(ts_ms - start_time)
+            found_duration = True
 
     if not durations:
         return {

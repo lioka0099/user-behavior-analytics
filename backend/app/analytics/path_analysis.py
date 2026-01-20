@@ -1,25 +1,39 @@
-from typing import Dict
+from typing import Dict, Optional, List
 from sqlalchemy.orm import Session
-from app.storage.events import get_all_events
+from app.db.models import EventDB
 
-def analyze_paths(db: Session, max_depth: int = 10, api_key: str | None = None) -> Dict[str, int]:
-    events = get_all_events(db, api_key)
-
-    sessions = {}
-    for event in events:
-        sessions.setdefault(event.session_id, []).append(event)
+def analyze_paths(db: Session, max_depth: int = 10, api_key: Optional[str] = None) -> Dict[str, int]:
+    # PERF: stream events in DB order and only keep first `max_depth` per session.
+    q = db.query(EventDB.session_id, EventDB.event_name, EventDB.timestamp_ms)
+    if api_key is not None:
+        q = q.filter(EventDB.api_key == api_key)
+    q = q.order_by(EventDB.session_id, EventDB.timestamp_ms)
 
     path_counts: Dict[str, int] = {}
+    current_session_id = None
+    names: List[str] = []
 
-    for session_events in sessions.values():
-        ordered = sorted(session_events, key=lambda e: e.timestamp_ms)
-        names = [e.event_name for e in ordered[:max_depth]]
-
+    def flush():
         if len(names) < 2:
-            continue
-
-        path = " → ".join(names)
+            return
+        path = " → ".join(names[:max_depth])
         path_counts[path] = path_counts.get(path, 0) + 1
+
+    for (session_id, event_name, _ts) in q.yield_per(5000):
+        if current_session_id is None:
+            current_session_id = session_id
+            names = [event_name]
+            continue
+        if session_id != current_session_id:
+            flush()
+            current_session_id = session_id
+            names = [event_name]
+            continue
+        if len(names) < max_depth:
+            names.append(event_name)
+
+    if current_session_id is not None:
+        flush()
 
     return dict(
         sorted(

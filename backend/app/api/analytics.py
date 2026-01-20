@@ -165,14 +165,107 @@ def generate_insights_endpoint(
     4. Returns the generated insight
     """
     # Build snapshot with api_key for filtering
-    snapshot = build_analytics_snapshot(db, request.api_key)
+    # #region agent log
+    _t0 = None
+    try:
+        import time as _time, json
+        _t0 = _time.time()
+        with open("/Users/lioka/Desktop/user-behavior-analytics/.cursor/debug.log", "a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "I2",
+                "location": "backend/app/api/analytics.py:generate_insights_endpoint:entry",
+                "message": "/analytics/insights called",
+                "data": {"api_key_len": (len(request.api_key) if isinstance(request.api_key, str) else None)},
+                "timestamp": int(_time.time() * 1000),
+            }) + "\n")
+    except Exception:
+        pass
+    # #endregion
+
+    _t_snapshot = None
+    try:
+        import time as _time
+        _t_snapshot = _time.time()
+    except Exception:
+        _t_snapshot = None
+    # Keep insight generation fast enough for typical cloud timeouts:
+    # we only need a small representative set of funnels for the LLM.
+    snapshot = build_analytics_snapshot(db, request.api_key, max_funnels=1)
+    _ms_snapshot = None
+    try:
+        import time as _time
+        _ms_snapshot = int((_time.time() - _t_snapshot) * 1000) if _t_snapshot is not None else None
+    except Exception:
+        _ms_snapshot = None
     
     # Generate prompt and get LLM insight
+    _t_prompt = None
+    try:
+        import time as _time
+        _t_prompt = _time.time()
+    except Exception:
+        _t_prompt = None
     prompt = build_insight_prompt(snapshot)
+    _ms_prompt = None
+    try:
+        import time as _time
+        _ms_prompt = int((_time.time() - _t_prompt) * 1000) if _t_prompt is not None else None
+    except Exception:
+        _ms_prompt = None
+
+    # #region agent log
+    try:
+        import time as _time, json
+        with open("/Users/lioka/Desktop/user-behavior-analytics/.cursor/debug.log", "a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "I2",
+                "location": "backend/app/api/analytics.py:generate_insights_endpoint:pre_llm",
+                "message": "insights snapshot+prompt ready",
+                "data": {"ms_snapshot": _ms_snapshot, "ms_prompt": _ms_prompt, "prompt_len": len(prompt)},
+                "timestamp": int(_time.time() * 1000),
+            }) + "\n")
+    except Exception:
+        pass
+    # #endregion
+
+    _t_llm = None
+    try:
+        import time as _time
+        _t_llm = _time.time()
+    except Exception:
+        _t_llm = None
     insight = generate_insights(prompt)
+    _ms_llm = None
+    try:
+        import time as _time
+        _ms_llm = int((_time.time() - _t_llm) * 1000) if _t_llm is not None else None
+    except Exception:
+        _ms_llm = None
 
     # Save insight WITH snapshot for historical comparison
     save_insight(db, request.api_key, insight, snapshot=snapshot)
+
+    # #region agent log
+    try:
+        import time as _time, json
+        total_ms = int((_time.time() - _t0) * 1000) if _t0 is not None else None
+        with open("/Users/lioka/Desktop/user-behavior-analytics/.cursor/debug.log", "a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "I2",
+                "location": "backend/app/api/analytics.py:generate_insights_endpoint:exit",
+                "message": "insights generated",
+                "data": {"ms_llm": _ms_llm, "ms_total": total_ms},
+                "timestamp": int(_time.time() * 1000),
+            }) + "\n")
+    except Exception:
+        pass
+    # #endregion
 
     return insight
 
