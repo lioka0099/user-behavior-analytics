@@ -1,3 +1,10 @@
+"""
+FastAPI Application Entry Point
+
+Creates the FastAPI app, configures CORS for the dashboard, initializes database
+tables, and mounts the API routers.
+"""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import events, funnels, analytics, apps

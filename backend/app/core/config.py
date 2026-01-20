@@ -1,3 +1,10 @@
+"""
+Application Configuration
+
+Loads environment-driven configuration for the backend (LLM provider, OpenAI key,
+and Supabase authentication settings).
+"""
+
 import os
 from dotenv import load_dotenv
 

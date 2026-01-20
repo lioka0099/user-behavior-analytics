@@ -1,3 +1,11 @@
+"""
+Core Pydantic Models
+
+Shared request/response models used by the backend API (event ingestion, funnels,
+paths, and insight diffs). These models validate payloads coming from the dashboard
+and the mobile SDK.
+"""
+
 from typing import Dict, List, Optional, Union
 from pydantic import BaseModel, Field
 from datetime import datetime
@@ -40,6 +48,7 @@ def create_funnel_definition(
     name: str,
     steps: List[str]
 ) -> FunnelDefinition:
+    """Create an in-memory funnel definition with a generated id/timestamp."""
     return FunnelDefinition(
         id=str(uuid.uuid4()),
         api_key=api_key,

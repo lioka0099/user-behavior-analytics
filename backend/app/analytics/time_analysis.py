@@ -1,3 +1,10 @@
+"""
+Time-to-Complete Analysis
+
+This module calculates how long it takes (per session) to go from a start event to an
+end event, then summarizes those durations (count/avg/median/min/max).
+"""
+
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from statistics import mean, median
@@ -5,6 +12,7 @@ from typing import Optional
 from app.db.models import EventDB
 
 class TimeToCompleteRequest(BaseModel):
+    """Request payload for the time-to-complete analytics endpoint."""
     start_event: str
     end_event: str
     api_key: Optional[str] = None
@@ -15,6 +23,11 @@ def calculate_time_to_complete(
     db: Session,
     api_key: Optional[str] = None
 ):
+    """
+    Compute duration statistics from first start_event to first end_event per session.
+
+    Only one duration per session is counted (the first completion after the start).
+    """
     durations = []
     if not start_event or not end_event:
         return {
@@ -27,7 +40,7 @@ def calculate_time_to_complete(
             "max_ms": None,
         }
 
-    # PERF: only scan the two relevant event types in DB order.
+
     q = db.query(EventDB.session_id, EventDB.event_name, EventDB.timestamp_ms)
     if api_key is not None:
         q = q.filter(EventDB.api_key == api_key)

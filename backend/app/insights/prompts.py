@@ -1,6 +1,15 @@
+"""
+LLM Prompt Builders
+
+Small helpers that turn structured analytics data into LLM prompts.
+All prompt builders instruct the model to return strict JSON (no markdown) so the
+backend can parse responses deterministically.
+"""
+
 from typing import Dict, Any
 
 def build_insight_prompt(analytics_snapshot: dict) -> str:
+    """Build a prompt to generate a single InsightResponse from a snapshot."""
     return f"""
 You must respond with VALID JSON ONLY.
 Do NOT use markdown.
@@ -20,6 +29,7 @@ Analytics snapshot:
 """
 
 def build_trend_prompt(insights: list[dict]) -> str:
+    """Build a prompt to generate InsightTrendResponse from historical insights."""
     return f"""
 You are a senior product analytics expert.
 

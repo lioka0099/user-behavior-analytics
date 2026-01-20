@@ -12,6 +12,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+/**
+ * App-scoped Settings Route
+ *
+ * Lets the user view/copy/regenerate the API key for the selected app.
+ * Uses `AppScope` so the dashboard's API client stays aligned with the current app.
+ */
 function AppSettingsContent({ appId }: { appId: string }) {
   const queryClient = useQueryClient();
   const [apiKey, setApiKey] = useState("");

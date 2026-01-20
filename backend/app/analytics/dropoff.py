@@ -1,3 +1,12 @@
+"""
+Funnel Drop-off Calculation
+
+This module computes where users drop off within a funnel: for each session, we track
+the last successfully matched step (in order) and increment that step's drop-off count.
+
+The implementation streams events ordered by session + time for performance.
+"""
+
 from typing import List, Dict, Optional
 from sqlalchemy.orm import Session
 from app.db.models import EventDB
@@ -8,7 +17,18 @@ def calculate_dropoff(
     db: Session,
     api_key: Optional[str] = None
 ) -> Dict:
-    # PERF: only scan events that could affect this funnel, in DB order.
+    """
+    Count drop-offs per funnel step for an ordered list of steps.
+
+    Args:
+        steps: Ordered list of funnel step event names.
+        db: SQLAlchemy session.
+        api_key: If provided, restrict computation to a single app/api_key.
+
+    Returns:
+        Dict with "steps" and "dropoffs" (mapping step -> number of sessions dropping there).
+    """
+
     dropoffs = {step: 0 for step in steps}
     if not steps:
         return {"steps": steps, "dropoffs": dropoffs}

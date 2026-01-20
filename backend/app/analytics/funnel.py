@@ -1,3 +1,11 @@
+"""
+Funnel Analysis (Server-Side)
+
+This module computes funnel conversion metrics from raw event rows in the database.
+It is implemented as a streaming scan (ordered by session + time) to keep memory usage
+low and avoid Python-side sorting on large datasets.
+"""
+
 from typing import List
 from sqlalchemy.orm import Session
 
@@ -5,9 +13,22 @@ from app.db.models import EventDB
 
 
 def run_funnel_for_steps(steps: List[str], db: Session, api_key: str | None = None):
-    # PERF: only pull events that could possibly affect this funnel.
-    # The old implementation loaded *all* events for the api_key, grouped, and sorted in Python,
-    # which can time out on large datasets.
+    """
+    Compute basic funnel metrics for an ordered list of step event names.
+
+    Notes:
+    - A session is counted as "entered" if it matches at least the first step.
+    - A session is "completed" only if it matches every step in order.
+
+    Args:
+        steps: Ordered list of event names representing the funnel.
+        db: SQLAlchemy session.
+        api_key: If provided, restrict computation to a single app/api_key.
+
+    Returns:
+        Dict with steps, sessions_entered, sessions_completed, and conversion_rate.
+    """
+
     query = db.query(EventDB.session_id, EventDB.event_name, EventDB.timestamp_ms)
     if api_key is not None:
         query = query.filter(EventDB.api_key == api_key)
@@ -51,7 +72,7 @@ def run_funnel_for_steps(steps: List[str], db: Session, api_key: str | None = No
 
         if step_index < len(steps) and event_name == steps[step_index]:
             step_index += 1
-            # We intentionally keep scanning until session boundary; we need step_index for finalize.
+          
 
     # finalize last session
     if current_session_id is not None:

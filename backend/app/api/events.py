@@ -1,3 +1,10 @@
+"""
+Events Ingestion API
+
+FastAPI routes for ingesting client-side analytics events. The primary endpoint accepts
+event batches and persists them via the storage layer.
+"""
+
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 
@@ -13,6 +20,7 @@ def ingest_events(
     batch: EventBatch,
     db: Session = Depends(get_db)
 ):
+    """Ingest a batch of events for a single `api_key`."""
     if not batch.events:
         raise HTTPException(status_code=400, detail="No events provided")
 

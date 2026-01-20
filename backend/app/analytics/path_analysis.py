@@ -1,9 +1,27 @@
+"""
+User Path Analysis
+
+This module summarizes common navigation/behavior paths by session by turning each
+session's first N events into a single "A → B → C" path string and counting frequency.
+"""
+
 from typing import Dict, Optional, List
 from sqlalchemy.orm import Session
 from app.db.models import EventDB
 
 def analyze_paths(db: Session, max_depth: int = 10, api_key: Optional[str] = None) -> Dict[str, int]:
-    # PERF: stream events in DB order and only keep first `max_depth` per session.
+    """
+    Aggregate the most common event-name paths across sessions.
+
+    Args:
+        db: SQLAlchemy session.
+        max_depth: Max number of events to include per session in the path.
+        api_key: If provided, restrict computation to a single app/api_key.
+
+    Returns:
+        Mapping of "event → event → ..." path string to occurrence count, sorted desc.
+    """
+   
     q = db.query(EventDB.session_id, EventDB.event_name, EventDB.timestamp_ms)
     if api_key is not None:
         q = q.filter(EventDB.api_key == api_key)

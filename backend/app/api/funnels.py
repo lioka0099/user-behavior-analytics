@@ -1,3 +1,10 @@
+"""
+Funnel Definitions API
+
+FastAPI routes for creating, listing, retrieving, and running saved funnel definitions.
+These endpoints sit on top of the storage layer and reuse the core funnel analysis code.
+"""
+
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 
@@ -19,6 +26,7 @@ def create_funnel_definition_endpoint(
     request: CreateFunnelDefinitionRequest,
     db: Session = Depends(get_db)
 ):
+    """Create and persist a named funnel definition for an `api_key`."""
     if not request.steps:
         raise HTTPException(status_code=400, detail="Funnel must have at least one step")
 
@@ -37,6 +45,7 @@ def run_funnel_definition(
     request: RunFunnelRequest,
     db: Session = Depends(get_db)
 ):
+    """Run funnel analysis using a previously saved definition's steps."""
     definition = get_funnel_definition(
         db,
         request.api_key,
@@ -57,6 +66,7 @@ def run_funnel_definition(
 
 @router.get("")
 def list_funnel_definitions_endpoint(api_key: str, db: Session = Depends(get_db)):
+    """List all saved funnel definitions for an `api_key`."""
     return list_funnel_definitions(db, api_key)
 
 
@@ -66,6 +76,7 @@ def get_funnel_definition_endpoint(
     api_key: str,
     db: Session = Depends(get_db)
 ):
+    """Fetch a single funnel definition by id for an `api_key`."""
     definition = get_funnel_definition(db, api_key, definition_id)
     if not definition:
         return {"error": "Definition not found"}

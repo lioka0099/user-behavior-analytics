@@ -1,3 +1,13 @@
+"""
+Database Models (SQLAlchemy)
+
+Defines the persistent schema used by the backend:
+- apps (per-user tracked applications + API keys)
+- events (raw analytics events)
+- funnel_definitions (saved funnels)
+- insights (LLM outputs + optional stored snapshots)
+"""
+
 from sqlalchemy import Column, String, DateTime, JSON, BigInteger, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
