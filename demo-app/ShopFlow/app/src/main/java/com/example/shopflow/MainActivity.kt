@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
         // Initialize the Analytics SDK with your API key and backend URL
         AnalyticsSDK.init(
             context = this,
-            apiKey = "app_c30f3d37",
+            apiKey = BuildConfig.ANALYTICS_API_KEY,
             endpoint = BuildConfig.ANALYTICS_ENDPOINT
         )
         
