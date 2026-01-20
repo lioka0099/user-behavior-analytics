@@ -13,8 +13,10 @@ app.add_middleware(
         "http://localhost:3000",  # Local development
         "http://127.0.0.1:3000",  # Local development (IPv4)
         "https://user-behavior-analytics.vercel.app",  # Vercel deployment
-        "https://*.vercel.app",  # Vercel preview deployments
     ],
+    # FastAPI doesn't support wildcard strings in allow_origins.
+    # Use a regex for Vercel preview deployments.
+    allow_origin_regex=r"^https://.*\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers

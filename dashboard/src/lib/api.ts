@@ -170,8 +170,18 @@ class ApiClient {
     return this.getApiKey().length > 0;
   }
 
+  /** Ensure we have an API key configured (dashboard requirement). */
+  private requireApiKey(): string {
+    const key = this.getApiKey();
+    if (!key.trim()) {
+      throw new Error("API key is required. Go to Apps → Settings and set/select an app.");
+    }
+    return key;
+  }
+
   /** Fetch event counts from backend */
   async getEventCounts(): Promise<EventCount> {
+    this.requireApiKey();
     const response = await fetch(
       `${API_BASE_URL}/analytics/event-counts?api_key=${this.apiKey}`
     );
@@ -184,6 +194,7 @@ class ApiClient {
    * Optionally filter to a single event name.
    */
   async getEventVolume(days = 7, eventName?: string): Promise<TimeseriesPoint[]> {
+    this.requireApiKey();
     const params = new URLSearchParams({
       api_key: this.apiKey,
       days: String(days),
@@ -197,6 +208,7 @@ class ApiClient {
 
   /** Get all funnel definitions for this API key */
   async getFunnelDefinitions(): Promise<FunnelDefinition[]> {
+    this.requireApiKey();
     const response = await fetch(
       `${API_BASE_URL}/analytics/definitions/funnel?api_key=${this.apiKey}`
     );
@@ -209,6 +221,7 @@ class ApiClient {
     name: string,
     steps: string[]
   ): Promise<FunnelDefinition> {
+    this.requireApiKey();
     const response = await fetch(
       `${API_BASE_URL}/analytics/definitions/funnel`,
       {
@@ -223,6 +236,7 @@ class ApiClient {
 
   /** Run funnel analysis on given steps */
   async runFunnel(steps: string[]): Promise<FunnelResult> {
+    this.requireApiKey();
     const response = await fetch(`${API_BASE_URL}/analytics/funnel`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -234,6 +248,7 @@ class ApiClient {
 
   /** Get all saved insights */
   async getInsightHistory(): Promise<Insight[]> {
+    this.requireApiKey();
     const response = await fetch(
       `${API_BASE_URL}/analytics/insights/history?api_key=${this.apiKey}`
     );
@@ -243,6 +258,7 @@ class ApiClient {
 
   /** Generate a new LLM insight */
   async generateInsight(): Promise<Insight> {
+    this.requireApiKey();
     const response = await fetch(`${API_BASE_URL}/analytics/insights`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -254,6 +270,7 @@ class ApiClient {
 
   /** Compare insights: rule-based diff + LLM explanation */
   async compareInsights(): Promise<InsightComparison> {
+    this.requireApiKey();
     const response = await fetch(
       `${API_BASE_URL}/analytics/insights/compare?api_key=${this.apiKey}`
     );

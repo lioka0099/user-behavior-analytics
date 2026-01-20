@@ -42,7 +42,9 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 def event_counts(api_key: str = None, db: Session = Depends(get_db)):
     """Get count of each event type, optionally filtered by api_key."""
     query = db.query(EventDB.event_name, func.count(EventDB.id)).group_by(EventDB.event_name)
-    if api_key:
+    # IMPORTANT: treat empty string as a real api_key (filter), not "no filter".
+    # Only None means "no filter".
+    if api_key is not None:
         query = query.filter(EventDB.api_key == api_key)
 
     rows = query.all()
@@ -100,6 +102,32 @@ def event_volume(
 @router.post("/funnel")
 def funnel_analysis(request: FunnelRequest, db: Session = Depends(get_db)):
     """Run funnel analysis for specified steps."""
+    # #region agent log
+    try:
+        import json, time
+        with open("/Users/lioka/Desktop/user-behavior-analytics/.cursor/debug.log", "a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "A",
+                "location": "backend/app/api/analytics.py:funnel_analysis:entry",
+                "message": "funnel_analysis called",
+                "data": {
+                    "api_key_is_none": request.api_key is None,
+                    "api_key_len": (len(request.api_key) if isinstance(request.api_key, str) else None),
+                    "steps_len": (len(request.steps) if isinstance(request.steps, list) else None),
+                },
+                "timestamp": int(time.time() * 1000),
+            }) + "\n")
+    except Exception:
+        pass
+    # #endregion
+    # Funnel analysis can be very expensive if we scan *all* events.
+    # Reject missing/blank api_key so we never accidentally do that in production.
+    if request.api_key is None or not request.api_key.strip():
+        raise HTTPException(status_code=400, detail="api_key is required for funnel analysis")
+    if not request.steps:
+        raise HTTPException(status_code=400, detail="steps must contain at least 1 event")
     return run_funnel_for_steps(request.steps, db, api_key=request.api_key)
 
 

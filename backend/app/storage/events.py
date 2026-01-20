@@ -22,12 +22,47 @@ def save_events(db: Session, api_key: str,events: List[Event]) -> None:
 
 def get_all_events(db: Session, api_key: str = None) -> List[Event]:
     """Get all events, optionally filtered by api_key."""
+    # #region agent log
+    try:
+        import json, time
+        with open("/Users/lioka/Desktop/user-behavior-analytics/.cursor/debug.log", "a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "A",
+                "location": "backend/app/storage/events.py:get_all_events:entry",
+                "message": "get_all_events called",
+                "data": {"api_key_is_none": api_key is None, "api_key_len": (len(api_key) if isinstance(api_key, str) else None)},
+                "timestamp": int(time.time() * 1000),
+            }) + "\n")
+    except Exception:
+        pass
+    # #endregion
     query = db.query(EventDB)
     
-    if api_key:
+    # IMPORTANT: treat empty string as a real api_key (filter), not "no filter".
+    # Only None means "no filter".
+    if api_key is not None:
         query = query.filter(EventDB.api_key == api_key)
     
     rows = query.all()
+
+    # #region agent log
+    try:
+        import json, time
+        with open("/Users/lioka/Desktop/user-behavior-analytics/.cursor/debug.log", "a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "A",
+                "location": "backend/app/storage/events.py:get_all_events:exit",
+                "message": "get_all_events returning",
+                "data": {"row_count": len(rows)},
+                "timestamp": int(time.time() * 1000),
+            }) + "\n")
+    except Exception:
+        pass
+    # #endregion
 
     return [
         Event(
