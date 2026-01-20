@@ -5,23 +5,6 @@ from app.db.models import EventDB
 
 
 def run_funnel_for_steps(steps: List[str], db: Session, api_key: str | None = None):
-    # #region agent log
-    try:
-        import json, time
-        with open("/Users/lioka/Desktop/user-behavior-analytics/.cursor/debug.log", "a", encoding="utf-8") as f:
-            f.write(json.dumps({
-                "sessionId": "debug-session",
-                "runId": "run1",
-                "hypothesisId": "B",
-                "location": "backend/app/analytics/funnel.py:run_funnel_for_steps:entry",
-                "message": "run_funnel_for_steps called",
-                "data": {"api_key_is_none": api_key is None, "api_key_len": (len(api_key) if isinstance(api_key, str) else None), "steps_len": len(steps)},
-                "timestamp": int(time.time() * 1000),
-            }) + "\n")
-    except Exception:
-        pass
-    # #endregion
-
     # PERF: only pull events that could possibly affect this funnel.
     # The old implementation loaded *all* events for the api_key, grouped, and sorted in Python,
     # which can time out on large datasets.
@@ -81,35 +64,6 @@ def run_funnel_for_steps(steps: List[str], db: Session, api_key: str | None = No
         sessions_completed / sessions_entered
         if sessions_entered > 0 else 0
     )
-
-    # #region agent log
-    try:
-        import json, time
-        duration_ms = None
-        try:
-            import time as _time
-            duration_ms = int((_time.time() - started_at) * 1000) if started_at is not None else None
-        except Exception:
-            duration_ms = None
-        with open("/Users/lioka/Desktop/user-behavior-analytics/.cursor/debug.log", "a", encoding="utf-8") as f:
-            f.write(json.dumps({
-                "sessionId": "debug-session",
-                "runId": "run1",
-                "hypothesisId": "B",
-                "location": "backend/app/analytics/funnel.py:run_funnel_for_steps:exit",
-                "message": "run_funnel_for_steps finished",
-                "data": {
-                    "events_processed": events_processed,
-                    "sessions_seen": sessions_seen,
-                    "sessions_entered": sessions_entered,
-                    "sessions_completed": sessions_completed,
-                    "duration_ms": duration_ms,
-                },
-                "timestamp": int(time.time() * 1000),
-            }) + "\n")
-    except Exception:
-        pass
-    # #endregion
 
     return {
         "steps": steps,

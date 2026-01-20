@@ -102,26 +102,6 @@ def event_volume(
 @router.post("/funnel")
 def funnel_analysis(request: FunnelRequest, db: Session = Depends(get_db)):
     """Run funnel analysis for specified steps."""
-    # #region agent log
-    try:
-        import json, time
-        with open("/Users/lioka/Desktop/user-behavior-analytics/.cursor/debug.log", "a", encoding="utf-8") as f:
-            f.write(json.dumps({
-                "sessionId": "debug-session",
-                "runId": "run1",
-                "hypothesisId": "A",
-                "location": "backend/app/api/analytics.py:funnel_analysis:entry",
-                "message": "funnel_analysis called",
-                "data": {
-                    "api_key_is_none": request.api_key is None,
-                    "api_key_len": (len(request.api_key) if isinstance(request.api_key, str) else None),
-                    "steps_len": (len(request.steps) if isinstance(request.steps, list) else None),
-                },
-                "timestamp": int(time.time() * 1000),
-            }) + "\n")
-    except Exception:
-        pass
-    # #endregion
     # Funnel analysis can be very expensive if we scan *all* events.
     # Reject missing/blank api_key so we never accidentally do that in production.
     if request.api_key is None or not request.api_key.strip():
