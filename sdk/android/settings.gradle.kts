@@ -20,5 +20,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "AnalyticsSdkHost"
-include(":app")
 include(":analytics-sdk")
