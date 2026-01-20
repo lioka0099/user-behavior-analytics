@@ -67,7 +67,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
     
     // My Analytics SDK from JitPack!
-    implementation("com.github.lioka0099:user-behavior-analytics:1.0.2")
+    implementation("com.github.lioka0099:user-behavior-analytics:1.0.3")
 
     // Testing
     testImplementation(libs.junit)
