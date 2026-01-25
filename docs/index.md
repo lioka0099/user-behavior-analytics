@@ -4,7 +4,7 @@ This documentation covers the full project: the **Backend API**, **Android SDK**
 
 ## What this project is
 
-User Behavior Analytics is a privacy-first analytics platform:
+User Behavior Analytics is an anonymous analytics platform:
 
 - **Client apps** (Android) track events using the **Android SDK**.
 - The SDK sends events to the **Backend API** (`POST /events`).

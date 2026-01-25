@@ -16,7 +16,7 @@ This document is the **single source of truth** for:
 
 ## 2. Core Principles
 
-- Privacy-first: no PII, no user identification
+- Anonymous sessions: no user identification (random session_id)
 - Platform-agnostic: Android is one client, not the system center
 - Events describe facts, not interpretations
 - SDKs must be safe, silent, and non-intrusive

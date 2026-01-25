@@ -126,7 +126,7 @@ Typical sequence:
 
 ## Privacy & data handling
 
-This project is designed to be **privacy-first**:
+This project uses **anonymous session tracking**:
 
 - Events are meant to contain **no PII** (no emails, names, phone numbers, etc.).
 - Sessions are anonymous (random `session_id`).

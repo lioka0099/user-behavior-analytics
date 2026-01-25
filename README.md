@@ -1,6 +1,6 @@
 # 📊 User Behavior Analytics
 
-> A privacy-first platform for collecting anonymous behavioral events from Android apps, storing them in the cloud, and exploring analytics with AI-powered insights.
+> A platform for collecting anonymous behavioral events from Android apps, storing them in the cloud, and exploring analytics with AI-powered insights.
 
 ## 🌟 Overview
 
