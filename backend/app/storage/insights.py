@@ -45,11 +45,3 @@ def list_insights(
         .order_by(InsightDB.created_at.desc())
         .all()
     )
-
-def get_latest_insight(db: Session, api_key: str) -> InsightDB | None:
-    return (
-        db.query(InsightDB)
-        .filter(InsightDB.api_key == api_key)
-        .order_by(InsightDB.created_at.desc())
-        .first()
-    )

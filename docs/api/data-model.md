@@ -65,7 +65,7 @@ Fields:
 How it is used:
 
 - The dashboard creates these via `/analytics/definitions/funnel`.
-- The dashboard can run them via `/analytics/definitions/funnel/{id}/run`.
+- The dashboard runs funnels via `/analytics/funnel` with the saved steps.
 
 ## Table: `insights`
 

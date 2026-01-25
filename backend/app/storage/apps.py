@@ -74,20 +74,6 @@ def get_app_by_id(db: Session, app_id: str, user_id: str) -> Optional[AppDB]:
     ).first()
 
 
-def get_app_by_api_key(db: Session, api_key: str) -> Optional[AppDB]:
-    """
-    Get an app by its API key.
-    
-    Args:
-        db: Database session
-        api_key: The app's unique API key
-    
-    Returns:
-        AppDB record or None if not found
-    """
-    return db.query(AppDB).filter(AppDB.api_key == api_key).first()
-
-
 def update_app(db: Session, app_id: str, user_id: str, app_data: AppUpdate) -> Optional[AppDB]:
     """
     Update an app's details.

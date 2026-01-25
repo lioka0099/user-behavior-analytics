@@ -2,7 +2,7 @@
 Analytics API Endpoints
 
 This module provides REST endpoints for:
-- Event analytics (counts, funnels, drop-offs, paths, time)
+- Event analytics (counts, funnels)
 - LLM-powered insights generation
 - Insight history and trend analysis
 - Insight comparison between time periods
@@ -11,18 +11,13 @@ This module provides REST endpoints for:
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException
-from collections import Counter
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from app.models.pydantic_models import FunnelRequest, PathAnalysisRequest
-from app.storage.events import get_all_events
+from app.models.pydantic_models import FunnelRequest
 from app.analytics.funnel import run_funnel_for_steps
 from app.db.deps import get_db
 from app.db.models import EventDB
-from app.analytics.dropoff import calculate_dropoff
-from app.analytics.time_analysis import calculate_time_to_complete, TimeToCompleteRequest
-from app.analytics.path_analysis import analyze_paths
 from app.analytics.insight_diff import compare_snapshots
 from app.insights.models import InsightRequest
 from app.insights.snapshot import build_analytics_snapshot, build_insight_history_snapshot
@@ -109,41 +104,6 @@ def funnel_analysis(request: FunnelRequest, db: Session = Depends(get_db)):
     if not request.steps:
         raise HTTPException(status_code=400, detail="steps must contain at least 1 event")
     return run_funnel_for_steps(request.steps, db, api_key=request.api_key)
-
-
-@router.post("/dropoff/debug")
-def debug_dropoff(
-    steps: list[str],
-    api_key: str | None = None,
-    db: Session = Depends(get_db)
-):
-    """Calculate drop-off at each funnel step."""
-    return calculate_dropoff(steps, db, api_key=api_key)
-
-
-@router.post("/time")
-def time_to_complete(
-    request: TimeToCompleteRequest,
-    db: Session = Depends(get_db)
-):
-    """Calculate time between two events."""
-    return calculate_time_to_complete(
-        request.start_event,
-        request.end_event,
-        db,
-        api_key=request.api_key
-    )
-
-
-@router.post("/paths")
-def path_analysis(
-    request: PathAnalysisRequest,
-    db: Session = Depends(get_db)
-):
-    """Analyze user paths through the application."""
-    return {
-        "paths": analyze_paths(db, request.max_depth, api_key=request.api_key)
-    }
 
 
 # =============================================================================

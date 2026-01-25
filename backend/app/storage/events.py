@@ -3,7 +3,6 @@ Event Storage (DB Persistence)
 
 This module is the data-access layer for analytics events:
 - write incoming events into the database
-- read events back (primarily for analytics/debug)
 """
 
 from typing import List
@@ -27,26 +26,3 @@ def save_events(db: Session, api_key: str, events: List[Event]) -> None:
         db.add(db_event)
 
     db.commit()
-
-
-def get_all_events(db: Session, api_key: str = None) -> List[Event]:
-    """Get all events, optionally filtered by api_key."""
-    query = db.query(EventDB)
-    
-    # IMPORTANT: treat empty string as a real api_key (filter), not "no filter".
-    # Only None means "no filter".
-    if api_key is not None:
-        query = query.filter(EventDB.api_key == api_key)
-    
-    rows = query.all()
-
-    return [
-        Event(
-            event_name=row.event_name,
-            session_id=row.session_id,
-            timestamp_ms=row.timestamp_ms,
-            platform=row.platform,
-            properties=row.properties,
-        )
-        for row in rows
-    ]

@@ -11,11 +11,6 @@ from statistics import mean, median
 from typing import Optional
 from app.db.models import EventDB
 
-class TimeToCompleteRequest(BaseModel):
-    """Request payload for the time-to-complete analytics endpoint."""
-    start_event: str
-    end_event: str
-    api_key: Optional[str] = None
 
 def calculate_time_to_complete(
     start_event: str,

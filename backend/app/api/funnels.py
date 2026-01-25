@@ -1,19 +1,18 @@
 """
 Funnel Definitions API
 
-FastAPI routes for creating, listing, retrieving, and running saved funnel definitions.
+FastAPI routes for creating and listing saved funnel definitions.
 These endpoints sit on top of the storage layer and reuse the core funnel analysis code.
 """
 
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 
-from app.models.pydantic_models import CreateFunnelDefinitionRequest, RunFunnelRequest
+from app.models.pydantic_models import CreateFunnelDefinitionRequest
 from app.db.models import FunnelDefinitionDB
 from app.storage.funnel_definitions import (
     save_funnel_definition,
     list_funnel_definitions,
-    get_funnel_definition
 )
 from app.analytics.funnel import run_funnel_for_steps
 from app.db.deps import get_db
@@ -39,46 +38,8 @@ def create_funnel_definition_endpoint(
     return save_funnel_definition(db, definition)
 
 
-@router.post("/{definition_id}/run")
-def run_funnel_definition(
-    definition_id: str,
-    request: RunFunnelRequest,
-    db: Session = Depends(get_db)
-):
-    """Run funnel analysis using a previously saved definition's steps."""
-    definition = get_funnel_definition(
-        db,
-        request.api_key,
-        definition_id
-    )
-
-    if not definition:
-        raise HTTPException(status_code=404, detail="Definition not found")
-
-    result = run_funnel_for_steps(definition.steps, db, api_key=request.api_key)
-
-    return {
-        "definition_id": definition.id,
-        "name": definition.name,
-        **result
-    }
-
-
 @router.get("")
 def list_funnel_definitions_endpoint(api_key: str, db: Session = Depends(get_db)):
     """List all saved funnel definitions for an `api_key`."""
     return list_funnel_definitions(db, api_key)
-
-
-@router.get("/{definition_id}")
-def get_funnel_definition_endpoint(
-    definition_id: str,
-    api_key: str,
-    db: Session = Depends(get_db)
-):
-    """Fetch a single funnel definition by id for an `api_key`."""
-    definition = get_funnel_definition(db, api_key, definition_id)
-    if not definition:
-        return {"error": "Definition not found"}
-    return definition
 

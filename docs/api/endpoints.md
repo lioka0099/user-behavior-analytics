@@ -158,82 +158,6 @@ Response (example):
 }
 ```
 
-### `POST /analytics/dropoff/debug`
-
-Calculate drop-off at each funnel step.
-
-- **Auth**: `api_key` (optional) query param
-- **Body**: JSON array of strings (steps)
-- **Query**
-  - `api_key` (optional)
-
-Example:
-
-```bash
-curl -X POST "http://localhost:8000/analytics/dropoff/debug?api_key=app_XXXXXXXX" \
-  -H "Content-Type: application/json" \
-  -d '["home_view", "product_view", "checkout_start", "purchase_complete"]'
-```
-
-### `POST /analytics/time`
-
-Compute duration stats between two events (per session).
-
-- **Auth**: `api_key` in JSON body (optional)
-- **Body**: `TimeToCompleteRequest`
-  - `start_event` (string)
-  - `end_event` (string)
-  - `api_key` (optional)
-
-Example:
-
-```bash
-curl -X POST "http://localhost:8000/analytics/time" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "api_key": "app_XXXXXXXX",
-    "start_event": "checkout_start",
-    "end_event": "purchase_complete"
-  }'
-```
-
-Response (example when data exists):
-
-```json
-{
-  "start_event": "checkout_start",
-  "end_event": "purchase_complete",
-  "count": 25,
-  "average_ms": 42000,
-  "median_ms": 39000,
-  "min_ms": 8000,
-  "max_ms": 120000
-}
-```
-
-### `POST /analytics/paths`
-
-Analyze common event paths through the app.
-
-- **Auth**: `api_key` in JSON body (optional)
-- **Body**: `PathAnalysisRequest`
-  - `api_key` (optional)
-  - `max_depth` (optional, default 10)
-
-Example:
-
-```bash
-curl -X POST "http://localhost:8000/analytics/paths" \
-  -H "Content-Type: application/json" \
-  -d '{ "api_key": "app_XXXXXXXX", "max_depth": 6 }'
-```
-
-Response:
-
-```json
-{ "paths": [ /* backend returns path analysis output */ ] }
-```
-
 ## Funnels (saved definitions)
 
 Saved funnel definitions are under:
@@ -255,20 +179,6 @@ Create a saved funnel definition.
 List funnel definitions for an API key.
 
 - **Auth**: `api_key` query param
-
-### `GET /analytics/definitions/funnel/{definition_id}?api_key=...`
-
-Get one funnel definition.
-
-- **Auth**: `api_key` query param
-
-### `POST /analytics/definitions/funnel/{definition_id}/run`
-
-Run a saved funnel definition.
-
-- **Auth**: `api_key` in JSON body
-- **Body**
-  - `api_key` (string)
 
 ## Insights
 

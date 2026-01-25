@@ -43,21 +43,6 @@ class FunnelDefinition(BaseModel):
     created_at: datetime
 
 
-def create_funnel_definition(
-    api_key: str,
-    name: str,
-    steps: List[str]
-) -> FunnelDefinition:
-    """Create an in-memory funnel definition with a generated id/timestamp."""
-    return FunnelDefinition(
-        id=str(uuid.uuid4()),
-        api_key=api_key,
-        name=name,
-        steps=steps,
-        created_at=datetime.utcnow()
-    )
-
-
 class FunnelRequest(BaseModel):
     api_key: Optional[str] = None
     steps: List[str]
@@ -68,13 +53,6 @@ class CreateFunnelDefinitionRequest(BaseModel):
     name: str
     steps: List[str]
 
-
-class RunFunnelRequest(BaseModel):
-    api_key: str
-
-class PathAnalysisRequest(BaseModel):
-    api_key: Optional[str] = None
-    max_depth: int = 10
 
 class InsightDiff(BaseModel):
     metrics_changed: Dict[str, str]   # e.g. {"conversion_rate": "decreased"}
