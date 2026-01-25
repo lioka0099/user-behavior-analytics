@@ -27,7 +27,6 @@ Analyze the following analytics data and produce actionable insights.
 Analytics snapshot:
 {analytics_snapshot}
 """
-
 def build_trend_prompt(insights: list[dict]) -> str:
     """Build a prompt to generate InsightTrendResponse from historical insights."""
     return f"""

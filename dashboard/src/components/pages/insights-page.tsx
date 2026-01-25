@@ -11,6 +11,7 @@ import {
   Minus,
   AlertCircle,
   CheckCircle2,
+  BarChart3,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ export function InsightsPage() {
   const queryClient = useQueryClient();
   const apiKey = api.getApiKey();
   const [showComparison, setShowComparison] = useState(false);
+  const [showTrends, setShowTrends] = useState(false);
 
   const { data: insights, isLoading } = useQuery({
     queryKey: ["insights", apiKey],
@@ -52,6 +54,7 @@ export function InsightsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["insights", apiKey] });
       queryClient.invalidateQueries({ queryKey: ["insightComparison", apiKey] });
+      queryClient.invalidateQueries({ queryKey: ["insightTrends", apiKey] });
     },
   });
 
@@ -59,6 +62,12 @@ export function InsightsPage() {
     queryKey: ["insightComparison", apiKey],
     queryFn: () => api.compareInsights(),
     enabled: showComparison && (insights?.length ?? 0) >= 2,
+  });
+
+  const trends = useQuery({
+    queryKey: ["insightTrends", apiKey],
+    queryFn: () => api.getInsightTrends(),
+    enabled: showTrends && (insights?.length ?? 0) >= 2,
   });
 
   return (
@@ -71,12 +80,27 @@ export function InsightsPage() {
         <div className="flex gap-3">
           <Button
             variant="outline"
-            onClick={() => setShowComparison((v) => !v)}
+            onClick={() => {
+              setShowTrends(false);
+              setShowComparison((v) => !v);
+            }}
             disabled={(insights?.length ?? 0) < 2}
             className="border-slate-700 text-slate-300 hover:bg-slate-800"
           >
             <GitCompare className="mr-2 h-4 w-4" />
-            {showComparison ? "Hide comparison" : "Compare trends"}
+            {showComparison ? "Hide comparison" : "Compare insights"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setShowComparison(false);
+              setShowTrends((v) => !v);
+            }}
+            disabled={(insights?.length ?? 0) < 2}
+            className="border-slate-700 text-slate-300 hover:bg-slate-800"
+          >
+            <BarChart3 className="mr-2 h-4 w-4" />
+            {showTrends ? "Hide trends" : "View trends"}
           </Button>
           <Button
             onClick={() => generateInsight.mutate()}
@@ -165,6 +189,105 @@ export function InsightsPage() {
                 ))}
               </div>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {showTrends && trends.data && (
+        <Card className="border-blue-600/50 bg-gradient-to-br from-blue-950/50 to-slate-950">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600/20">
+                <BarChart3 className="h-5 w-5 text-blue-400" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Trend Analysis</CardTitle>
+                <p className="text-sm text-slate-400">Long-term patterns across all insights</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="rounded-lg bg-slate-900/50 p-4">
+              <p className="mb-2 text-sm font-medium text-slate-300">Summary</p>
+              <p className="text-slate-200">{trends.data.summary}</p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="rounded-lg bg-blue-950/20 p-4">
+                <p className="mb-3 flex items-center gap-2 text-sm font-medium text-blue-400">
+                  <TrendingUp className="h-4 w-4" />
+                  Key Changes
+                </p>
+                {trends.data.changes.length ? (
+                  <ul className="space-y-2">
+                    {trends.data.changes.map((change, i) => (
+                      <li key={i} className="text-sm text-slate-300">
+                        - {change}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-slate-500">No significant changes detected</p>
+                )}
+              </div>
+
+              <div className="rounded-lg bg-rose-950/20 p-4">
+                <p className="mb-3 flex items-center gap-2 text-sm font-medium text-rose-400">
+                  <AlertCircle className="h-4 w-4" />
+                  Risks
+                </p>
+                {trends.data.risks.length ? (
+                  <ul className="space-y-2">
+                    {trends.data.risks.map((risk, i) => (
+                      <li key={i} className="text-sm text-slate-300">
+                        - {risk}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-slate-500">No risks identified</p>
+                )}
+              </div>
+
+              <div className="rounded-lg bg-emerald-950/20 p-4">
+                <p className="mb-3 flex items-center gap-2 text-sm font-medium text-emerald-400">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Opportunities
+                </p>
+                {trends.data.opportunities.length ? (
+                  <ul className="space-y-2">
+                    {trends.data.opportunities.map((opportunity, i) => (
+                      <li key={i} className="text-sm text-slate-300">
+                        - {opportunity}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-slate-500">No opportunities identified</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {showTrends && trends.isLoading && (
+        <Card className="border-slate-800 bg-slate-900/50">
+          <CardContent className="flex items-center justify-center py-12">
+            <RefreshCw className="h-6 w-6 animate-spin text-violet-500" />
+            <span className="ml-3 text-slate-400">Analyzing trends...</span>
+          </CardContent>
+        </Card>
+      )}
+
+      {showTrends && trends.isError && (
+        <Card className="border-rose-600/50 bg-rose-950/20">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <AlertCircle className="h-6 w-6 text-rose-400" />
+            <p className="mt-3 text-slate-300">
+              {trends.error instanceof Error ? trends.error.message : "Failed to load trends"}
+            </p>
+            <p className="mt-1 text-sm text-slate-500">Make sure you have at least 2 insights</p>
           </CardContent>
         </Card>
       )}

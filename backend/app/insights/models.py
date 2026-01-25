@@ -17,7 +17,6 @@ class InsightResponse(BaseModel):
     summary: str
     insights: List[str]
     recommendations: List[str]
-
 class InsightTrendResponse(BaseModel):
     """Structured trend analysis returned from the LLM across multiple insights."""
     summary: str

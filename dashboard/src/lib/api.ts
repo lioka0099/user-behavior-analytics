@@ -53,6 +53,14 @@ export interface Insight {
   created_at: string;
 }
 
+/** Result of trend analysis across historical insights */
+export interface InsightTrends {
+  summary: string;
+  changes: string[];
+  risks: string[];
+  opportunities: string[];
+}
+
 /** Result of comparing two insights */
 export interface InsightComparison {
   comparison: {
@@ -265,6 +273,16 @@ class ApiClient {
       body: JSON.stringify({ api_key: this.apiKey }),
     });
     if (!response.ok) throw new Error("Failed to generate insight");
+    return response.json();
+  }
+
+  /** Get trend analysis across historical insights */
+  async getInsightTrends(): Promise<InsightTrends> {
+    this.requireApiKey();
+    const response = await fetch(
+      `${API_BASE_URL}/analytics/insights/trends?api_key=${this.apiKey}`
+    );
+    if (!response.ok) throw new Error("Failed to fetch insight trends");
     return response.json();
   }
 
