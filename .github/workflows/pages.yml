@@ -28,6 +28,11 @@ jobs:
           lfs: true
           fetch-depth: 0
 
+      - name: Verify LFS files are downloaded
+        run: |
+          git lfs pull
+          file docs/assets/Dashboard_Apps.png | grep -q "PNG image" || (echo "LFS file not downloaded correctly" && exit 1)
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -42,6 +47,15 @@ jobs:
 
       - name: Build with MkDocs
         run: mkdocs build --strict
+
+      - name: Verify images in build output
+        run: |
+          echo "Checking build output..."
+          ls -lh site/assets/*.png | head -5
+          test -f site/assets/Dashboard_Apps.png || (echo "Image not found in build output" && exit 1)
+          file site/assets/Dashboard_Apps.png | grep -q "PNG image" || (echo "Image is not a valid PNG" && exit 1)
+          echo "✓ Images verified in build output"
+          echo "Image count: $(ls site/assets/*.png | wc -l)"
 
       - name: Create .nojekyll file
         run: touch site/.nojekyll

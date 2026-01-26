@@ -7,6 +7,10 @@ repo_name: lioka0099/user-behavior-analytics
 repo_url: https://github.com/lioka0099/user-behavior-analytics
 edit_uri: edit/main/docs/
 
+# Ensure assets are copied correctly
+docs_dir: docs
+site_dir: site
+
 theme:
   name: material
   palette:
