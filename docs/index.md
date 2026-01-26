@@ -28,14 +28,14 @@ User Behavior Analytics is an anonymous analytics platform:
 
 Quick look at the dashboard UI (full set in [`dashboard/overview.md`](dashboard/overview.md)).
 
-![Dashboard apps]({{ "/assets/Dashboard_Apps.png" | relative_url }})
+![Dashboard apps](assets/Dashboard_Apps.png)
 
-![Dashboard events]({{ "/assets/Dashboard_Events.png" | relative_url }})
+![Dashboard events](assets/Dashboard_Events.png)
 
-![Dashboard insights]({{ "/assets/Dashboard_Insights.png" | relative_url }})
+![Dashboard insights](assets/Dashboard_Insights.png)
 
 Charts preview:
 
-![Dashboard charts (1)]({{ "/assets/Dashboard_Charts1.png" | relative_url }})
+![Dashboard charts (1)](assets/Dashboard_Charts1.png)
 
-![Dashboard charts (2)]({{ "/assets/Dashboard_Chart2.png" | relative_url }})
+![Dashboard charts (2)](assets/Dashboard_Chart2.png)
