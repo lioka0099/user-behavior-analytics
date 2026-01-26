@@ -35,14 +35,16 @@ jobs:
 
       - name: Install MkDocs and dependencies
         run: |
-          pip install mkdocs-material
-          pip install mkdocs-git-revision-date-localized-plugin
+          pip install -r requirements-docs.txt
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Build with MkDocs
         run: mkdocs build --strict
+
+      - name: Create .nojekyll file
+        run: touch site/.nojekyll
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
