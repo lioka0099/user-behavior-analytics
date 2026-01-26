@@ -20,19 +20,19 @@ These screenshots are stored in `docs/assets/`:
 
 ### Home screen
 
-<img src="assets/ShopFlow_Homescreen.jpg" alt="ShopFlow Home screen" width="300" />
+<img src="/assets/ShopFlow_Homescreen.jpg" alt="ShopFlow Home screen" width="300" />
 
 ### Product view
 
-<img src="assets/ShopFlow_ProductView.jpg" alt="ShopFlow Product view" width="300" />
+<img src="/assets/ShopFlow_ProductView.jpg" alt="ShopFlow Product view" width="300" />
 
 ### Shopping cart
 
-<img src="assets/Shopflow_ShoppingCart.jpg" alt="ShopFlow Shopping cart" width="300" />
+<img src="/assets/Shopflow_ShoppingCart.jpg" alt="ShopFlow Shopping cart" width="300" />
 
 ### Checkout
 
-<img src="assets/Shopflow_Checkout.jpg" alt="ShopFlow Checkout" width="300" />
+<img src="/assets/Shopflow_Checkout.jpg" alt="ShopFlow Checkout" width="300" />
 
 ## Requirements
 

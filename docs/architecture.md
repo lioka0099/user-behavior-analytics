@@ -24,7 +24,7 @@ This page explains how the project’s parts work together: **Android SDK → Ba
 #### Diagram
 
 <img
-  src="assets/DataFlowDiagram.png"
+  src="/assets/DataFlowDiagram.png"
   alt="Data flow diagram (Android app -> SDK -> backend -> database -> dashboard)"
   width="900"
   style="max-width: 100%; height: auto;"
@@ -37,7 +37,7 @@ This diagram focuses on **components**, **responsibilities**, and the two auth p
 #### Diagram
 
 <img
-  src="assets/ArchitectureDiagram.png"
+  src="/assets/ArchitectureDiagram.png"
   alt="Architecture diagram (clients, dashboard, backend service, database, auth boundaries)"
   width="900"
   style="max-width: 100%; height: auto;"

@@ -108,33 +108,33 @@ In Vercel project settings, set the same environment variables as `.env.local`:
 
 ### Login / Register
 
-![Dashboard login](assets/Dashboard_Login.png)
+![Dashboard login](/assets/Dashboard_Login.png)
 
-![Dashboard register](assets/Dashboard_Register.png)
+![Dashboard register](/assets/Dashboard_Register.png)
 
 ### Apps
 
-![Dashboard apps](assets/Dashboard_Apps.png)
+![Dashboard apps](/assets/Dashboard_Apps.png)
 
 ### Settings (API key / configuration)
 
-![Dashboard settings](assets/Dashboard_Settings.png)
+![Dashboard settings](/assets/Dashboard_Settings.png)
 
 ### Events
 
-![Dashboard events](assets/Dashboard_Events.png)
+![Dashboard events](/assets/Dashboard_Events.png)
 
 ### Funnels
 
-![Dashboard funnels](assets/Dashboard_Fannels.png)
+![Dashboard funnels](/assets/Dashboard_Fannels.png)
 
 ### Insights
 
-![Dashboard insights](assets/Dashboard_Insights.png)
+![Dashboard insights](/assets/Dashboard_Insights.png)
 
 ### Charts
 
-![Dashboard charts (1)](assets/Dashboard_Charts1.png)
+![Dashboard charts (1)](/assets/Dashboard_Charts1.png)
 
-![Dashboard charts (2)](assets/Dashboard_Chart2.png)
+![Dashboard charts (2)](/assets/Dashboard_Chart2.png)
 

@@ -91,7 +91,7 @@ How it is used:
 This is a conceptual relationship diagram. Note that the links are by `api_key` (not DB foreign keys).
 
 <img
-  src="assets/RelationshipDiagram.png"
+  src="/assets/RelationshipDiagram.png"
   alt="Data model relationship diagram (apps linked to events/funnels/insights by api_key)"
   width="900"
   style="max-width: 100%; height: auto;"
