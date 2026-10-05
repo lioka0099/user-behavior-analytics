@@ -1,10 +1,10 @@
 fastapi
 uvicorn[standard]
 pydantic
-sqlalchemy
+sqlalchemy>=2.1
 openai
 python-dotenv
-psycopg2-binary
+psycopg[binary]
 gunicorn
 pyjwt
 httpx

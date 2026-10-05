@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install Python dependencies
-# Note: We use psycopg2-binary which is pre-compiled, no need for gcc/libpq-dev
+# Note: psycopg[binary] ships pre-compiled, no need for gcc/libpq-dev
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
