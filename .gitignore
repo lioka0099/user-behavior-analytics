@@ -252,3 +252,4 @@ demo-app/ShopFlow/**/.DS_Store
 # IDE files
 .vscode/
 .idea/
+.claude

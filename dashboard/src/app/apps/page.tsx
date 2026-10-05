@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
  *
  * Auth:
  * - This page is protected by `ProtectedRoute` via `AppLayout`
- * - Requests here call `/apps` endpoints which require a Supabase JWT
+ * - Requests here call `/apps` endpoints which require the login JWT
  *
  * Navigation:
  * - Clicking an app goes to `/apps/[appId]/dashboard` (implemented in a later step)

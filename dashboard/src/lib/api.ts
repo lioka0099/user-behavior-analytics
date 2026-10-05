@@ -5,11 +5,11 @@
  * Instead of writing fetch() calls in every component, we use this client.
  */
 
-// The backend URL - uses environment variable or defaults to your Railway deployment
+// The backend URL - uses environment variable or defaults to the Vercel deployment
 // Remove trailing slash if present to avoid double slashes in URLs
-const API_BASE_URL = (
+export const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://user-behavior-analytics-production.up.railway.app"
+  "https://user-behavior-analytics-api.vercel.app"
 ).replace(/\/+$/, "");
 
 // ============ Type Definitions ============
@@ -95,6 +95,18 @@ export interface App {
   updated_at: string;
 }
 
+/** Signed-in dashboard user */
+export interface User {
+  id: string;
+  email: string;
+}
+
+/** Returned by /auth/register and /auth/login */
+export interface AuthResponse {
+  access_token: string;
+  user: User;
+}
+
 // ============ API Client Class ============
 
 // Helper to safely access localStorage (not available during SSR)
@@ -105,29 +117,12 @@ const getStoredApiKey = (): string => {
   return "";
 };
 
-/**
- * Get JWT token from Supabase session
- * This is called dynamically to get the latest session
- */
-async function getAuthToken(): Promise<string | null> {
-  if (typeof window === "undefined") return null;
+const TOKEN_KEY = "auth_token";
 
-  try {
-    const { supabase } = await import("./supabase");
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) {
-      console.warn("Failed to get session:", error);
-      return null;
-    }
-    if (!session) {
-      console.warn("No active session found");
-      return null;
-    }
-    return session.access_token || null;
-  } catch (error) {
-    console.warn("Failed to get auth token:", error);
-    return null;
-  }
+/** JWT issued by the backend's /auth endpoints (persisted in localStorage) */
+function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(TOKEN_KEY);
 }
 
 /**
@@ -140,7 +135,7 @@ async function getAuthHeaders(includeContentType = true): Promise<HeadersInit> {
     headers["Content-Type"] = "application/json";
   }
 
-  const token = await getAuthToken();
+  const token = getAuthToken();
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
@@ -293,6 +288,56 @@ class ApiClient {
       `${API_BASE_URL}/analytics/insights/compare?api_key=${this.apiKey}`
     );
     if (!response.ok) throw new Error("Failed to compare insights");
+    return response.json();
+  }
+
+  // =============================================================================
+  // Auth Endpoints
+  // =============================================================================
+
+  /** Store (or clear, with null) the login token */
+  setToken(token: string | null) {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
+  }
+
+  /** Create an account (also signs it in) */
+  register(email: string, password: string): Promise<AuthResponse> {
+    return this.authRequest("register", email, password, "Failed to create account");
+  }
+
+  /** Exchange email + password for a token */
+  login(email: string, password: string): Promise<AuthResponse> {
+    return this.authRequest("login", email, password, "Invalid email or password");
+  }
+
+  private async authRequest(
+    path: "register" | "login",
+    email: string,
+    password: string,
+    fallbackError: string
+  ): Promise<AuthResponse> {
+    const response = await fetch(`${API_BASE_URL}/auth/${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      // FastAPI validation errors (422) carry a list, not a message
+      throw new Error(typeof error.detail === "string" ? error.detail : fallbackError);
+    }
+    return response.json();
+  }
+
+  /** Current user for the stored token, or null if there is none or it is invalid/expired */
+  async getMe(): Promise<User | null> {
+    if (!getAuthToken()) return null;
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: await getAuthHeaders(false),
+    });
+    if (response.status === 401) return null;
+    if (!response.ok) throw new Error("Failed to fetch current user");
     return response.json();
   }
 

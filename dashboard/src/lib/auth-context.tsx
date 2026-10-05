@@ -1,21 +1,18 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "./supabase";
+import { api, User, AuthResponse } from "./api";
 
 /**
  * Auth Context
- * 
+ *
  * Provides authentication state and methods throughout the app.
- * Wraps Supabase Auth to give a simpler React-friendly API.
+ * Accounts live in the backend (/auth/*); the token is kept in localStorage.
  */
 
 interface AuthContextType {
   // Current user (null if not logged in)
   user: User | null;
-  // Current session (contains access token)
-  session: Session | null;
   // Loading state while checking auth
   isLoading: boolean;
   // Auth methods
@@ -31,67 +28,53 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    };
-
-    getInitialSession();
-
-    // Listen for auth changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event: any, session: any) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsLoading(false);
-      }
-    );
-
-    // Cleanup subscription on unmount
-    return () => {
-      subscription.unsubscribe();
-    };
+    // Restore the session from a stored token
+    api.getMe()
+      .then((me) => {
+        if (!me) api.setToken(null); // expired or unknown user
+        setUser(me);
+      })
+      .catch((error) => console.warn("Failed to restore session:", error))
+      .finally(() => setIsLoading(false));
   }, []);
+
+  /** Store the token from register/login and set the user */
+  const authenticate = async (request: Promise<AuthResponse>) => {
+    try {
+      const { access_token, user } = await request;
+      api.setToken(access_token);
+      setUser(user);
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
 
   /**
    * Sign in with email and password
    */
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error: error as Error | null };
-  };
+  const signIn = (email: string, password: string) =>
+    authenticate(api.login(email, password));
 
   /**
-   * Sign up with email and password
+   * Sign up with email and password (signs the new account in)
    */
-  const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    return { error: error as Error | null };
-  };
+  const signUp = (email: string, password: string) =>
+    authenticate(api.register(email, password));
 
   /**
    * Sign out the current user
    */
   const signOut = async () => {
-    await supabase.auth.signOut();
+    api.setToken(null);
+    setUser(null);
   };
 
   const value = {
     user,
-    session,
     isLoading,
     signIn,
     signUp,
@@ -107,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 /**
  * Hook to access auth context
- * 
+ *
  * Usage:
  * const { user, signIn, signOut } = useAuth();
  */

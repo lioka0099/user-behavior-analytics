@@ -4,7 +4,7 @@ This page documents the REST endpoints exposed by the FastAPI backend.
 
 ## Base URL
 
-- **Production**: `https://user-behavior-analytics-production.up.railway.app`
+- **Production**: `https://user-behavior-analytics-api.vercel.app`
 - **Local**: `http://localhost:8000`
 
 Interactive API docs (when running):
@@ -22,10 +22,10 @@ This backend uses **two different authentication mechanisms**, depending on the 
 - How it works: the SDK sends an **`api_key`** in the request body or query string
 - Meaning: identifies **which tracked app/project** the events belong to
 
-### 2) Dashboard auth (Supabase JWT)
+### 2) Dashboard auth (login JWT)
 
-- Used by: `/apps/*` endpoints (create/list/update/delete apps)
-- How it works: the dashboard sends `Authorization: Bearer <supabase_access_token>`
+- Used by: `/apps/*` and `GET /auth/me`
+- How it works: the dashboard gets a token from `/auth/login` (or `/auth/register`) and sends `Authorization: Bearer <access_token>`
 - Meaning: identifies **which user** is making the request (backend uses `sub` claim as `user_id`)
 
 ## Common conventions
@@ -210,16 +210,41 @@ Compare the two most recent insights (rule-based diff + LLM explanation).
 
 - **Auth**: `api_key` query param
 
+## Auth (dashboard accounts)
+
+### `POST /auth/register`
+
+Create an account and sign it in.
+
+- **Body**: `{ "email": string, "password": string (6–128 chars) }`
+- **Response** `201`: `{ "access_token": string, "user": { "id": string, "email": string } }`
+- **Errors**: `409` email already registered, `422` invalid email/password
+
+### `POST /auth/login`
+
+Exchange email + password for a token.
+
+- **Body**: same as register
+- **Response** `200`: same as register
+- **Errors**: `401` invalid email or password
+
+### `GET /auth/me`
+
+Return the signed-in user.
+
+- **Auth**: Bearer JWT
+- **Response** `200`: `{ "id": string, "email": string }`
+
 ## Apps (dashboard / admin)
 
-Apps endpoints are prefixed by `/apps` and require **Supabase JWT auth**.
+Apps endpoints are prefixed by `/apps` and require the **login JWT**.
 
 ### Authorization header
 
 All `/apps` requests must include:
 
 ```text
-Authorization: Bearer <SUPABASE_ACCESS_TOKEN>
+Authorization: Bearer <ACCESS_TOKEN>
 ```
 
 ### `POST /apps`

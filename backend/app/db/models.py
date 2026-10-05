@@ -2,6 +2,7 @@
 Database Models (SQLAlchemy)
 
 Defines the persistent schema used by the backend:
+- users (dashboard accounts)
 - apps (per-user tracked applications + API keys)
 - events (raw analytics events)
 - funnel_definitions (saved funnels)
@@ -15,23 +16,34 @@ import uuid
 from app.db.database import Base
 
 
+# ============ User Model ============
+
+class UserDB(Base):
+    """A dashboard account (email + scrypt password hash)."""
+    __tablename__ = "users"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = Column(String, unique=True, index=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 # ============ App Model ============
-# Links Supabase Auth users to their apps
-# Each app has a unique API key for event tracking
+# Each app belongs to a user and has a unique API key for event tracking
 
 class AppDB(Base):
     """
     Represents an app/project that a user wants to track.
     Each user can have multiple apps, each with its own API key.
     
-    The user_id comes from Supabase Auth (UUID format).
+    The user_id is the owning UserDB.id (UUID format).
     """
     __tablename__ = "apps"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     
-    # Links to Supabase Auth user (not a foreign key since users are in Supabase)
-    user_id = Column(String, index=True, nullable=False)
+    # Owning user
+    user_id = Column(String, ForeignKey("users.id"), index=True, nullable=False)
     
     # Unique API key for this app (used in SDK initialization)
     api_key = Column(String, unique=True, index=True, nullable=False)

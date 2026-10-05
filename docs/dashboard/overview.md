@@ -4,14 +4,13 @@ This page documents the web dashboard located in `dashboard/`.
 
 The dashboard is the **admin portal** for the platform:
 
-- Users sign in/up with **Supabase Auth**
+- Users sign in/up with email + password (accounts live in the backend)
 - Users can create/manage tracked apps (which generates `api_key` values)
 - Users can view analytics, funnels, and insights for a selected `api_key`
 
 ## Tech stack
 
 - Next.js (App Router)
-- Supabase Auth (email/password)
 - React Query (data fetching and caching)
 - Tailwind CSS UI
 
@@ -23,31 +22,28 @@ npm install
 npm run dev
 ```
 
-Open: `http://localhost:3000`
+Open: `http://localhost:3000` (Next.js picks the next free port if 3000 is taken)
 
 ## Environment variables
 
 Create `dashboard/.env.local`:
 
 ```bash
-NEXT_PUBLIC_API_URL="https://user-behavior-analytics-production.up.railway.app"
-NEXT_PUBLIC_SUPABASE_URL="https://<project-ref>.supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="<your-anon-key>"
+NEXT_PUBLIC_API_URL="http://localhost:8000"
 ```
 
-What they do:
+What it does:
 
-- **`NEXT_PUBLIC_API_URL`**: backend base URL
-- **`NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`**: Supabase project keys used by the frontend client
+- **`NEXT_PUBLIC_API_URL`**: backend base URL (defaults to the production backend URL if unset)
 
 ## Authentication flow
 
 Pages:
 
-- `/register`: creates a new user in Supabase Auth
-- `/login`: signs in and creates a Supabase session
+- `/register`: creates an account via `POST /auth/register` and signs it in
+- `/login`: signs in via `POST /auth/login`
 
-Auth state is managed by `dashboard/src/lib/auth-context.tsx` (subscribes to Supabase session changes).
+Both return a JWT that is stored in localStorage (`auth_token`). On load, `dashboard/src/lib/auth-context.tsx` restores the session with `GET /auth/me`.
 
 Protected pages use `ProtectedRoute` to redirect unauthenticated users to `/login`.
 
@@ -57,11 +53,11 @@ The dashboard uses `dashboard/src/lib/api.ts` as a centralized API client.
 
 There are **two backend auth modes**:
 
-### 1) JWT (Supabase) — used for app management
+### 1) JWT — used for app management
 
 For `/apps` endpoints:
 
-- The dashboard fetches the current Supabase session
+- The dashboard reads the stored login token
 - Sends `Authorization: Bearer <access_token>`
 
 Examples (JWT-protected endpoints):
@@ -98,11 +94,9 @@ Examples (api_key-scoped endpoints):
 
 Deploy the `dashboard/` folder to Vercel.
 
-In Vercel project settings, set the same environment variables as `.env.local`:
+In Vercel project settings, set:
 
 - `NEXT_PUBLIC_API_URL`
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 ## Screenshots & walkthrough
 

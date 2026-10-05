@@ -7,7 +7,7 @@ import { useParams } from "next/navigation";
 import { Copy, RefreshCw, Settings } from "lucide-react";
 
 import { AppScope } from "@/components/app-scope";
-import api from "@/lib/api";
+import api, { API_BASE_URL } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,9 +43,7 @@ function AppSettingsContent({ appId }: { appId: string }) {
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const apiEndpoint =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "https://user-behavior-analytics-production.up.railway.app";
+  const apiEndpoint = API_BASE_URL;
 
   return (
     <div className="space-y-8">

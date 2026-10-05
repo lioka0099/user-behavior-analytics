@@ -8,8 +8,8 @@ User Behavior Analytics is a comprehensive end-to-end system that enables develo
 
 ### System Components
 
-- **🔧 Backend API** (FastAPI) - Event ingestion, analytics engine, and app management
-- **📱 Dashboard** (Next.js) - Admin portal with Supabase authentication
+- **🔧 Backend API** (FastAPI) - Event ingestion, analytics engine, app management, and auth
+- **📱 Dashboard** (Next.js) - Admin portal with email/password login
 - **📲 Android SDK** (Kotlin) - Developer library for seamless event tracking
 - **🛍️ Demo App** (ShopFlow) - Real-world implementation example
 - **📚 Documentation** - Comprehensive guides hosted on GitHub Pages
@@ -21,21 +21,41 @@ User Behavior Analytics is a comprehensive end-to-end system that enables develo
 | Resource | URL |
 |----------|-----|
 | **Documentation** | [https://lioka0099.github.io/user-behavior-analytics/](https://lioka0099.github.io/user-behavior-analytics/) |
-| **Backend API** | [https://user-behavior-analytics-production.up.railway.app](https://user-behavior-analytics-production.up.railway.app) |
+| **Backend API** | [https://user-behavior-analytics-api.vercel.app](https://user-behavior-analytics-api.vercel.app) |
 | **Dashboard** | [https://user-behavior-analytics.vercel.app](https://user-behavior-analytics.vercel.app) |
 
 ---
 
 ## 🏗️ Architecture
 
-<img src="docs/assets/ArchitectureDiagram.png" alt="Architecture diagram" width="900" style="max-width: 100%; height: auto;" />
+```mermaid
+flowchart TB
+    subgraph Client["Client (Developer)"]
+        App["Android App"] -->|calls| SDK["Android SDK<br/>init · track · flush"]
+    end
+
+    subgraph Portal["Admin Portal (Web)"]
+        Dash["Dashboard<br/>Next.js"]
+    end
+
+    subgraph Backend["Backend Service"]
+        API["Backend API (FastAPI)<br/>/events · /auth · /apps · /analytics"]
+        DB[("Neon Postgres<br/>DATABASE_URL")]
+        API -->|ORM reads / writes| DB
+    end
+
+    SDK -->|"POST /events<br/>Auth: api_key"| API
+    Dash -->|"POST /auth/login → JWT<br/>/apps, /analytics<br/>Auth: Bearer JWT"| API
+```
+
+The SDK path uses `api_key` to identify the tracked app; the dashboard path uses a JWT to identify the logged-in user, and the backend enforces app ownership with the `user_id` from that JWT.
 
 ### Authentication Modes
 
 The system uses two distinct authentication mechanisms:
 
 1. **SDK Ingestion** - Uses `api_key` sent in the batch request body
-2. **Dashboard Management** - Uses `Authorization: Bearer <Supabase JWT>` for `/apps/*` endpoints
+2. **Dashboard Management** - Uses `Authorization: Bearer <JWT>` (issued by `/auth/login`) for `/apps/*` endpoints
 
 ---
 
@@ -54,7 +74,7 @@ The system uses two distinct authentication mechanisms:
 ```text
 user-behavior-analytics/
 ├── backend/              # FastAPI service + SQLAlchemy models + analytics logic
-├── dashboard/            # Next.js admin portal (Supabase auth)
+├── dashboard/            # Next.js admin portal
 ├── sdk/android/          # Android library module (analytics-sdk)
 ├── demo-app/ShopFlow/    # Android demo app (uses the published SDK)
 ├── docs/                 # Documentation (GitHub Pages)
@@ -71,6 +91,7 @@ backend/
 │   │   ├── events.py          # POST /events
 │   │   ├── analytics.py       # /analytics/*
 │   │   ├── funnels.py         # /analytics/definitions/funnel/*
+│   │   ├── auth.py            # /auth/* (register, login, me)
 │   │   └── apps.py            # /apps/* (JWT-protected)
 │   ├── db/                    # DB engine/session + SQLAlchemy models
 │   │   ├── database.py
@@ -91,15 +112,14 @@ backend/
 │   │   ├── prompts.py
 │   │   ├── generator.py
 │   │   └── models.py
-│   ├── core/                  # Config + Supabase JWT validation
+│   ├── core/                  # Config + password hashing + JWT
 │   │   ├── config.py
 │   │   └── auth.py
 │   └── models/                # Pydantic request/response models
 │       ├── app.py
 │       └── pydantic_models.py
 ├── requirements.txt
-├── Dockerfile
-└── nixpacks.toml
+└── Dockerfile
 ```
 
 ### 📱 Dashboard Structure
@@ -119,9 +139,8 @@ dashboard/
 │   │           ├── insights/page.tsx
 │   │           └── settings/page.tsx
 │   ├── components/            # Layout + UI components + pages
-│   └── lib/                   # API client + Supabase client + auth context
+│   └── lib/                   # API client + auth context
 │       ├── api.ts
-│       ├── supabase.ts
 │       └── auth-context.tsx
 └── package.json
 ```
@@ -170,7 +189,7 @@ docs/
 
 ## 🔄 How It Works (End-to-End Flow)
 
-1. **Authentication** - User signs in to the dashboard via Supabase Auth
+1. **Authentication** - User registers/signs in to the dashboard (backend issues a JWT)
 2. **App Creation** - User creates an App in `/apps`, backend generates an `api_key`
 3. **SDK Configuration** - Developer configures Android app with the `api_key` and backend endpoint
 4. **Event Collection** - SDK sends event batches to the backend via `POST /events`
@@ -189,6 +208,8 @@ source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
+
+Auth flow check: `python -m tests.test_auth`
 
 **Interactive API Documentation:**
 - Swagger UI: `http://localhost:8000/docs`
@@ -221,21 +242,18 @@ npm run dev
 Create `backend/.env` with the following:
 
 ```bash
-# Database
-DATABASE_URL=postgresql://...
+# Signs dashboard login tokens (required)
+# python -c "import secrets; print(secrets.token_urlsafe(32))"
+JWT_SECRET=your-random-secret
 
-# Supabase (JWT validation via JWKS)
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
+# Database — Neon Postgres (free tier, auto-resumes when idle).
+# Leave unset to use a local SQLite file.
+DATABASE_URL=postgresql://USER:PASSWORD@HOST.neon.tech/DBNAME?sslmode=require
 
 # LLM Configuration
 LLM_PROVIDER=mock  # or 'openai' for real AI insights
 OPENAI_API_KEY=sk-...  # required if LLM_PROVIDER=openai
 ```
-
-> Note:
-> - `SUPABASE_ANON_KEY` here is used by the **backend** during Supabase JWT (JWKS) verification in some setups.
-> - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (dashboard) is the **public** key used by the browser-side Supabase client.
 
 ### Dashboard Environment Variables
 
@@ -244,10 +262,6 @@ Create `dashboard/.env.local` with the following:
 ```bash
 # Backend API
 NEXT_PUBLIC_API_URL=http://localhost:8000
-
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
 ---
@@ -281,7 +295,7 @@ import com.example.analytics.AnalyticsSDK
 AnalyticsSDK.init(
     context = this,
     apiKey = "app_XXXXXXXX",
-    endpoint = "https://user-behavior-analytics-production.up.railway.app/",
+    endpoint = "https://user-behavior-analytics-api.vercel.app/",
     flushThreshold = 0
 )
 
@@ -362,8 +376,9 @@ The platform is deployed across multiple services:
 | Component | Platform | Configuration |
 |-----------|----------|---------------|
 | **Documentation** | GitHub Pages | `.github/workflows/pages.yml` |
-| **Backend API** | Railway | `railway.json`, `backend/nixpacks.toml` |
-| **Dashboard** | Vercel | `dashboard/` |
+| **Backend API** | Vercel (Python function) | Root Directory: `backend/` |
+| **Database** | Neon (Postgres) | `DATABASE_URL` |
+| **Dashboard** | Vercel | Root Directory: `dashboard/` |
 
 ---
 

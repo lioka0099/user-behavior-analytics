@@ -50,7 +50,7 @@ import com.example.analytics.AnalyticsSDK
 AnalyticsSDK.init(
   context = this,
   apiKey = "app_XXXXXXXX",
-  endpoint = "https://user-behavior-analytics-production.up.railway.app/",
+  endpoint = "https://user-behavior-analytics-api.vercel.app/",
   flushThreshold = 0
 )
 ```
@@ -160,9 +160,9 @@ Make sure your endpoint is the backend base URL and that it includes `/events` u
 
 Examples:
 
-- ✅ `endpoint = "https://...railway.app/"`
+- ✅ `endpoint = "https://...vercel.app/"`
 - ✅ `endpoint = "http://10.0.2.2:8000/"`
-- ❌ `endpoint = "https://...railway.app/events"` (SDK already uses `/events`)
+- ❌ `endpoint = "https://...vercel.app/events"` (SDK already uses `/events`)
 
 ### Requests fail from a physical device
 

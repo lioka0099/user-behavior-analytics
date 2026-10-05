@@ -6,10 +6,22 @@ Source of truth in code: `backend/app/db/models.py`
 
 ## Entity overview
 
-- **`apps`**: apps/projects owned by a Supabase user, each app has a unique `api_key`
+- **`users`**: dashboard accounts (email + scrypt password hash)
+- **`apps`**: apps/projects owned by a user, each app has a unique `api_key`
 - **`events`**: raw event stream sent by SDKs, keyed by `api_key`
 - **`funnel_definitions`**: saved funnels for a given `api_key`
 - **`insights`**: stored AI insights for a given `api_key` (with optional snapshots for comparison)
+
+## Table: `users`
+
+Purpose: dashboard accounts.
+
+Fields:
+
+- **`id`** *(string UUID)*: primary key (used as the JWT `sub` claim)
+- **`email`** *(string, unique, indexed)*: lowercase login email
+- **`password_hash`** *(string)*: `scrypt$<salt>$<hash>`
+- **`created_at`** *(datetime)*: record creation time (UTC)
 
 ## Table: `apps`
 
@@ -18,7 +30,7 @@ Purpose: store the tracked apps/projects a user owns and the API key used by SDK
 Fields:
 
 - **`id`** *(string UUID)*: primary key
-- **`user_id`** *(string, indexed)*: Supabase user id (from JWT `sub`)
+- **`user_id`** *(string, indexed, FK → `users.id`)*: owning user (from JWT `sub`)
 - **`api_key`** *(string, unique, indexed)*: API key used by SDKs and analytics filtering
 - **`name`** *(string)*: human-readable app name
 - **`description`** *(string | null)*: optional description

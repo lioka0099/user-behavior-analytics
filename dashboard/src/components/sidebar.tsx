@@ -94,7 +94,7 @@ export function Sidebar() {
         <div className="rounded-lg bg-gradient-to-r from-violet-600/10 to-indigo-600/10 p-3">
           <p className="text-xs text-slate-400">Connected to</p>
           <p className="mt-1 truncate text-sm font-medium text-white">
-            Railway API
+            Backend API
           </p>
         </div>
       </div>

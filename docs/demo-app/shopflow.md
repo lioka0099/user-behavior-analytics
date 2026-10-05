@@ -52,7 +52,7 @@ Example (current repo values):
 
 ```kotlin
 buildConfigField("String", "ANALYTICS_API_KEY", "\"app_c30f3d37\"")
-buildConfigField("String", "ANALYTICS_ENDPOINT", "\"https://user-behavior-analytics-production.up.railway.app/\"")
+buildConfigField("String", "ANALYTICS_ENDPOINT", "\"https://user-behavior-analytics-api.vercel.app/\"")
 ```
 
 These become `BuildConfig.ANALYTICS_API_KEY` and `BuildConfig.ANALYTICS_ENDPOINT` at runtime.

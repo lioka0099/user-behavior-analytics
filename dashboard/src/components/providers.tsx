@@ -8,7 +8,7 @@ import { AuthProvider } from "@/lib/auth-context";
  * Providers component wraps the entire app with necessary context providers.
  * 
  * Includes:
- * - AuthProvider: Supabase authentication state
+ * - AuthProvider: authentication state (backend /auth)
  * - React Query: for data fetching, caching, and state management
  * 
  * Why useState for QueryClient?

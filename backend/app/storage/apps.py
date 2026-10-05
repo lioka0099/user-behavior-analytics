@@ -24,7 +24,7 @@ def create_app(db: Session, user_id: str, app_data: AppCreate) -> AppDB:
     
     Args:
         db: Database session
-        user_id: Supabase Auth user ID (UUID)
+        user_id: Owning user ID (UUID)
         app_data: App creation data (name, description)
     
     Returns:
@@ -48,7 +48,7 @@ def get_apps_by_user(db: Session, user_id: str) -> List[AppDB]:
     
     Args:
         db: Database session
-        user_id: Supabase Auth user ID
+        user_id: Owning user ID
     
     Returns:
         List of AppDB records
@@ -63,7 +63,7 @@ def get_app_by_id(db: Session, app_id: str, user_id: str) -> Optional[AppDB]:
     Args:
         db: Database session
         app_id: The app's ID
-        user_id: Supabase Auth user ID (for authorization check)
+        user_id: Owning user ID (for authorization check)
     
     Returns:
         AppDB record or None if not found/not authorized
@@ -81,7 +81,7 @@ def update_app(db: Session, app_id: str, user_id: str, app_data: AppUpdate) -> O
     Args:
         db: Database session
         app_id: The app's ID
-        user_id: Supabase Auth user ID (for authorization)
+        user_id: Owning user ID (for authorization)
         app_data: Fields to update
     
     Returns:
@@ -109,7 +109,7 @@ def delete_app(db: Session, app_id: str, user_id: str) -> bool:
     Args:
         db: Database session
         app_id: The app's ID
-        user_id: Supabase Auth user ID (for authorization)
+        user_id: Owning user ID (for authorization)
     
     Returns:
         True if deleted, False if not found/not authorized
@@ -131,7 +131,7 @@ def regenerate_api_key(db: Session, app_id: str, user_id: str) -> Optional[AppDB
     Args:
         db: Database session
         app_id: The app's ID
-        user_id: Supabase Auth user ID (for authorization)
+        user_id: Owning user ID (for authorization)
     
     Returns:
         Updated AppDB record with new API key, or None if not found
