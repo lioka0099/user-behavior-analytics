@@ -82,7 +82,9 @@ Success response:
 
 All analytics endpoints are prefixed by `/analytics`.
 
-### `GET /analytics/event-counts`
+> Paths under `/analytics/event…` are avoided on purpose: the EasyPrivacy filter list (Brave Shields, uBlock Origin) blocks that prefix in the browser.
+
+### `GET /analytics/counts`
 
 Returns a map of event name → count.
 
@@ -93,7 +95,7 @@ Returns a map of event name → count.
 Example:
 
 ```bash
-curl "http://localhost:8000/analytics/event-counts?api_key=app_XXXXXXXX"
+curl "http://localhost:8000/analytics/counts?api_key=app_XXXXXXXX"
 ```
 
 Response (example):
@@ -102,7 +104,7 @@ Response (example):
 { "app_open": 12, "product_view": 40 }
 ```
 
-### `GET /analytics/event-volume`
+### `GET /analytics/volume`
 
 Daily event volume for the last N days (UTC).
 
@@ -115,7 +117,7 @@ Daily event volume for the last N days (UTC).
 Example:
 
 ```bash
-curl "http://localhost:8000/analytics/event-volume?api_key=app_XXXXXXXX&days=14"
+curl "http://localhost:8000/analytics/volume?api_key=app_XXXXXXXX&days=14"
 ```
 
 Response (example):

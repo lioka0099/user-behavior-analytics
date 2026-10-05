@@ -76,8 +76,8 @@ For analytics endpoints, the dashboard uses an `api_key` stored in browser local
 
 Examples (api_key-scoped endpoints):
 
-- `GET /analytics/event-counts?api_key=...`
-- `GET /analytics/event-volume?api_key=...`
+- `GET /analytics/counts?api_key=...`
+- `GET /analytics/volume?api_key=...`
 - `GET /analytics/insights/history?api_key=...`
 - `GET /analytics/definitions/funnel?api_key=...`
 

@@ -32,8 +32,10 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 # =============================================================================
 # Event Analytics Endpoints
 # =============================================================================
+# Paths must not start with "/analytics/event": EasyPrivacy (used by Brave
+# Shields and uBlock Origin) blocks that prefix, which empties the dashboard.
 
-@router.get("/event-counts")
+@router.get("/counts")
 def event_counts(api_key: str = None, db: Session = Depends(get_db)):
     """Get count of each event type, optionally filtered by api_key."""
     query = db.query(EventDB.event_name, func.count(EventDB.id)).group_by(EventDB.event_name)
@@ -46,7 +48,7 @@ def event_counts(api_key: str = None, db: Session = Depends(get_db)):
     return {name: int(count) for (name, count) in rows}
 
 
-@router.get("/event-volume")
+@router.get("/volume")
 def event_volume(
     api_key: str,
     days: int = 7,

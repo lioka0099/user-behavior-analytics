@@ -186,7 +186,7 @@ class ApiClient {
   async getEventCounts(): Promise<EventCount> {
     this.requireApiKey();
     const response = await fetch(
-      `${API_BASE_URL}/analytics/event-counts?api_key=${this.apiKey}`
+      `${API_BASE_URL}/analytics/counts?api_key=${this.apiKey}`
     );
     if (!response.ok) throw new Error("Failed to fetch event counts");
     return response.json();
@@ -204,7 +204,7 @@ class ApiClient {
     });
     if (eventName) params.set("event_name", eventName);
 
-    const response = await fetch(`${API_BASE_URL}/analytics/event-volume?${params}`);
+    const response = await fetch(`${API_BASE_URL}/analytics/volume?${params}`);
     if (!response.ok) throw new Error("Failed to fetch event volume");
     return response.json();
   }
