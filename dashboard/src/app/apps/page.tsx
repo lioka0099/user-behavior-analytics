@@ -9,6 +9,7 @@ import api from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SignOutButton } from "@/components/sign-out-button";
 
 /**
  * Apps Page (JWT-protected)
@@ -94,12 +95,15 @@ export default function AppsPage() {
             Pick an app to view its analytics dashboard
           </p>
         </div>
-        <Badge
-          variant="outline"
-          className="border-slate-700 bg-slate-900/40 text-slate-300"
-        >
-          {appsQuery.data?.length ?? 0} app{(appsQuery.data?.length ?? 0) === 1 ? "" : "s"}
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Badge
+            variant="outline"
+            className="border-slate-700 bg-slate-900/40 text-slate-300"
+          >
+            {appsQuery.data?.length ?? 0} app{(appsQuery.data?.length ?? 0) === 1 ? "" : "s"}
+          </Badge>
+          <SignOutButton />
+        </div>
       </div>
 
       {/* Create App */}

@@ -43,7 +43,7 @@ Pages:
 - `/register`: creates an account via `POST /auth/register` and signs it in
 - `/login`: signs in via `POST /auth/login`
 
-Both return a JWT that is stored in localStorage (`auth_token`). On load, `dashboard/src/lib/auth-context.tsx` restores the session with `GET /auth/me`.
+Both return a JWT that is stored in sessionStorage (`auth_token`), so closing the tab or browser signs the user out. On load, `dashboard/src/lib/auth-context.tsx` restores the session with `GET /auth/me`.
 
 Protected pages use `ProtectedRoute` to redirect unauthenticated users to `/login`.
 

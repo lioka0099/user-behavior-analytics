@@ -119,10 +119,13 @@ const getStoredApiKey = (): string => {
 
 const TOKEN_KEY = "auth_token";
 
-/** JWT issued by the backend's /auth endpoints (persisted in localStorage) */
+/**
+ * JWT issued by the backend's /auth endpoints. Kept in sessionStorage so the
+ * login ends when the tab/browser is closed.
+ */
 function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem(TOKEN_KEY);
+  return sessionStorage.getItem(TOKEN_KEY);
 }
 
 /**
@@ -297,8 +300,8 @@ class ApiClient {
 
   /** Store (or clear, with null) the login token */
   setToken(token: string | null) {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
+    if (token) sessionStorage.setItem(TOKEN_KEY, token);
+    else sessionStorage.removeItem(TOKEN_KEY);
   }
 
   /** Create an account (also signs it in) */

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { SignOutButton } from "@/components/sign-out-button";
 import {
   FolderKanban,
   LayoutDashboard,
@@ -97,6 +98,7 @@ export function Sidebar() {
             Backend API
           </p>
         </div>
+        <SignOutButton className="mt-3 w-full" />
       </div>
     </aside>
   );

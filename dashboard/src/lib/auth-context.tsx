@@ -1,13 +1,15 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { api, User, AuthResponse } from "./api";
 
 /**
  * Auth Context
  *
  * Provides authentication state and methods throughout the app.
- * Accounts live in the backend (/auth/*); the token is kept in localStorage.
+ * Accounts live in the backend (/auth/*); the token is kept in sessionStorage,
+ * so closing the tab/browser signs the user out.
  */
 
 interface AuthContextType {
@@ -29,6 +31,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     // Restore the session from a stored token
@@ -46,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { access_token, user } = await request;
       api.setToken(access_token);
+      queryClient.clear(); // never show a previous user's cached data
       setUser(user);
       return { error: null };
     } catch (error) {
@@ -70,6 +74,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const signOut = async () => {
     api.setToken(null);
+    // Forget the selected app's API key and cached data too
+    api.setApiKey("");
+    localStorage.removeItem("analytics_current_app_id");
+    queryClient.clear();
     setUser(null);
   };
 
