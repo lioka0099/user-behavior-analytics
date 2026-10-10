@@ -28,3 +28,15 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           # The app's config refuses to import without it; the seed script never signs tokens.
           JWT_SECRET: not-used-by-the-seed-script
+
+  # GitHub pauses scheduled workflows in a public repo after 60 days without repo
+  # activity. Re-enabling this workflow on every run restarts that clock.
+  keepalive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/reset-demo.yml/enable"
+        env:
+          GH_TOKEN: ${{ github.token }}
