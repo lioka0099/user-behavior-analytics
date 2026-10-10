@@ -5,9 +5,13 @@ on:
     - cron: "0 3 * * *" # every night, 03:00 UTC
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   reset:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: backend
