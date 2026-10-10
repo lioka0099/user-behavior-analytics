@@ -8,16 +8,16 @@ import { ProtectedRoute } from "@/components/protected-route";
  * App Layout Component
  * 
  * Conditionally shows sidebar and protects routes.
- * - Login/Register pages: No sidebar, no protection
+ * - Login/Register/Demo pages: No sidebar, no protection
  * - All other pages: Sidebar + ProtectedRoute
  */
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isAuthPage = pathname === "/login" || pathname === "/register" || pathname === "/demo";
   const isAppsListPage = pathname === "/apps";
   const isInsideApp = pathname.startsWith("/apps/") && !isAppsListPage;
 
-  // Auth pages (login/register) - no sidebar, no protection
+  // Auth pages (login/register/demo) - no sidebar, no protection
   if (isAuthPage) {
     return <>{children}</>;
   }
