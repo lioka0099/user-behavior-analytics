@@ -3,6 +3,7 @@ Funnel Drop-off Calculation
 
 This module computes where users drop off within a funnel: for each session, we track
 the last successfully matched step (in order) and increment that step's drop-off count.
+Sessions that complete every step are completions, not drop-offs.
 
 The implementation streams events ordered by session + time for performance.
 """
@@ -47,7 +48,7 @@ def calculate_dropoff(
             current_session_id = session_id
             step_index = 0
         elif session_id != current_session_id:
-            if step_index > 0:
+            if 0 < step_index < len(steps):  # completing every step isn't a drop-off
                 dropoffs[steps[step_index - 1]] += 1
             current_session_id = session_id
             step_index = 0
@@ -55,7 +56,7 @@ def calculate_dropoff(
         if step_index < len(steps) and event_name == steps[step_index]:
             step_index += 1
 
-    if current_session_id is not None and step_index > 0:
+    if current_session_id is not None and 0 < step_index < len(steps):
         dropoffs[steps[step_index - 1]] += 1
 
     return {
