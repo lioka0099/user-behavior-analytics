@@ -138,8 +138,8 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Register Link */}
-          <div className="mt-6 text-center">
+          {/* Register + Demo Links */}
+          <div className="mt-6 space-y-2 text-center">
             <p className="text-sm text-slate-400">
               Don&apos;t have an account?{" "}
               <Link
@@ -147,6 +147,15 @@ export default function LoginPage() {
                 className="font-medium text-violet-400 hover:text-violet-300 underline-offset-4 hover:underline"
               >
                 Sign up
+              </Link>
+            </p>
+            <p className="text-sm text-slate-400">
+              Just looking?{" "}
+              <Link
+                href="/demo"
+                className="font-medium text-violet-400 hover:text-violet-300 underline-offset-4 hover:underline"
+              >
+                Try the demo
               </Link>
             </p>
           </div>
