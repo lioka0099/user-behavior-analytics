@@ -128,15 +128,9 @@ def generate_insights_endpoint(
     """
     # Keep insight generation fast enough for typical cloud timeouts:
     # we only need a small representative set of funnels for the LLM.
-    snapshot = build_analytics_snapshot(
-        db,
-        request.api_key,
-        max_funnels=1,
-        include_paths=False,      # can be expensive; not required for LLM summary
-        include_dropoffs=False,   # can be expensive; not required for LLM summary
-        include_time=False,       # can be expensive; not required for LLM summary
-        include_error_count=True,
-    )
+    # Drop-offs, paths and timing stay on: a skipped metric reaches the LLM as an
+    # empty value, and it then reports "no drop-offs" or "zero paths" as fact.
+    snapshot = build_analytics_snapshot(db, request.api_key, max_funnels=1)
     
     # Generate prompt and get LLM insight
     prompt = build_insight_prompt(snapshot)

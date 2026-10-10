@@ -67,7 +67,8 @@ def build_analytics_snapshot(
     # 1. Analyze user paths (optional; can be expensive on large datasets)
     if include_paths:
         paths = analyze_paths(db, max_depth=5, api_key=api_key)
-        snapshot["paths"] = paths
+        # Top 10 only: the snapshot goes into the LLM prompt and is stored with each insight.
+        snapshot["paths"] = dict(list(paths.items())[:10])
         snapshot["unique_paths"] = len(paths)
     
     # 2. Get funnel definitions for this api_key
